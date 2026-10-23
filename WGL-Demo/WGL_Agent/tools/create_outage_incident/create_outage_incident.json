@@ -1,0 +1,10 @@
+{
+  "name": "create_outage_incident",
+  "pythonFunction": {
+    "name": "create_outage_incident",
+    "pythonCode": "tools/create_outage_incident/python_function/python_code.py",
+    "description": "Reports a gas outage for an address. If an outage is already known for that ZIP code it returns\nthe known incident instead of creating a new one. Works for guests and identified callers.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id when the caller is identified; empty for guests.\n    address: Service address including the ZIP code (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and either incident_number (new report) or existing_outage, incident_id and\n    eta (already known)."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "create_outage_incident"
+}

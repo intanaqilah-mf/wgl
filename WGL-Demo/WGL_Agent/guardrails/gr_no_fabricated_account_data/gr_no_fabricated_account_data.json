@@ -1,0 +1,18 @@
+{
+  "name": "d68cac8d-e8b4-4af0-a1a5-30cec4ced7fb",
+  "displayName": "gr_no_fabricated_account_data",
+  "description": "BR-GU-009 and BR-GU-013: responses must not state a balance, due date, confirmation number or plan detail that no tool supplied. Lenient: only clear specific claims.",
+  "action": {
+    "respondImmediately": {
+      "responses": [{
+        "text": "Let me check that for you. Permítame verificarlo."
+      }]
+    }
+  },
+  "llmPolicy": {
+    "maxConversationMessages": 10,
+    "prompt": "### CRITICAL RULE\n- Trigger only when the agent response states a specific balance, due date, confirmation number or plan detail as fact and that detail was not provided by a tool earlier in the conversation.\n- This guardrail is lenient: ordinary answers, empathy, questions and general explanations must pass.\n\n### TRIGGER CRITERIA\nFLAG the message if it asserts a specific account figure that no tool result supplied.\n\n**Definition of an invented account claim:** a concrete dollar amount, date, number or plan term about the customer\u0027s own account that did not come from a tool result in this conversation.\n\n**Explicit Claims to FLAG:**\n* A balance, due date, payment amount or confirmation number stated as fact with no preceding tool result.\n\n### DO NOT FLAG (False Positive Prevention)\nDo NOT flag if the response only asks a question, explains how something works in general, repeats figures a tool returned, or speaks a verbatim legal string. Ignore phone numbers, dates of the current conversation and fees stated by a verbatim string.",
+    "policyScope": "AGENT_RESPONSE",
+    "failOpen": true
+  }
+}

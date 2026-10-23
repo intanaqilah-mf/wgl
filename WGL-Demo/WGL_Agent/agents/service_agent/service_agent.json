@@ -1,0 +1,13 @@
+{
+  "name": "service_agent",
+  "displayName": "service_agent",
+  "description": "Handles start, stop and move of service, meter readings, usage history, high usage and all appointments.",
+  "instruction": "agents/service_agent/instruction.txt",
+  "tools": ["check_active_service_at_address", "check_ancp_enrollment", "check_service_territory", "commit_appointment_change", "create_callback_ticket", "create_service_order", "end_session", "execute_live_agent_handoff", "fetch_technician_slots", "fire_utility_payment_notification", "get_account_insights", "get_active_appointments", "get_appointment_eta", "get_stop_eligibility", "get_tenant_config", "get_usage_history", "get_verbatim_string", "knowledge_base_search", "run_high_bill_diagnosis", "send_info_link", "set_session_state", "show_appointment_confirmation", "show_checklist_card", "show_emergency_card", "show_insights_carousel", "show_quick_actions", "show_slot_picker", "show_usage_history_card", "show_weather_usage_card", "submit_meter_read", "update_language", "usps_v3_validate_address", "washgas_website"],
+  "beforeModelCallbacks": [{
+    "pythonCode": "agents/service_agent/before_model_callbacks/before_model_callbacks_01/python_code.py"
+  }],
+  "afterModelCallbacks": [{
+    "pythonCode": "agents/service_agent/after_model_callbacks/after_model_callbacks_01/python_code.py"
+  }]
+}

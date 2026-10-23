@@ -1,0 +1,72 @@
+{
+  "name": "show_rebate_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_rebate_card",
+  "widgetTool": {
+    "name": "show_rebate_card",
+    "description": "Shows up to five rebate cards on chat with the published amount, the deadline and a Start claim button. Use it after find_rebates when the caller is on chat; on voice, speak the best match and offer a text link. Pass the card field of find_rebates as is. Amounts and deadlines come only from that tool. No spoken pacing is needed. Call shape: name is always cx-show-rebate-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-rebate-card (the card element this tool renders).",
+          "enum": ["cx-show-rebate-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "rebates": {
+              "type": "ARRAY",
+              "description": "Rebates exactly as returned by find_rebates.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "action_label": {
+                    "type": "STRING",
+                    "description": "Button text."
+                  },
+                  "action_message": {
+                    "type": "STRING",
+                    "description": "What the customer says when they tap the button."
+                  },
+                  "amount": {
+                    "type": "STRING",
+                    "description": "Published amount as display text, for example $500 to $700."
+                  },
+                  "deadline": {
+                    "type": "STRING",
+                    "description": "Deadline date; omit when the program lists none."
+                  },
+                  "id": {
+                    "type": "STRING",
+                    "description": "Program id."
+                  },
+                  "name": {
+                    "type": "STRING",
+                    "description": "Program name."
+                  },
+                  "status_note": {
+                    "type": "STRING",
+                    "description": "Why it may fit, for example Matches your furnace."
+                  }
+                }
+              }
+            }
+          },
+          "required": ["rebates"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Rebates that may fit"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write a one-line lead and bullets for the best-fit rebate: its amount, the apply-by date with the days left when the lookup gave a countdown, and that the amounts and dates are published on wgsmartsavings.com and the program decides eligibility. Never write a raw web address: when a link helps, write a markdown link with a short label such as [See all rebates](address) using the address from the lookup. Do not read every card."
+    }
+  }
+}

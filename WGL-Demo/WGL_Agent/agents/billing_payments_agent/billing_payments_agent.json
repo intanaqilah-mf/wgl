@@ -1,0 +1,13 @@
+{
+  "name": "billing_payments_agent",
+  "displayName": "billing_payments_agent",
+  "description": "Explains bills and high bills, takes payments, and manages Budget Plan, AutoPay, duplicate bills and pending payments.",
+  "instruction": "agents/billing_payments_agent/instruction.txt",
+  "tools": ["cancel_pending_payment", "end_session", "enrol_budget_plan", "execute_live_agent_handoff", "find_payment_locations", "fire_utility_payment_notification", "get_account_insights", "get_bill_breakdown", "get_bill_history", "get_bill_line_items", "get_billing_history", "get_ebill_flag", "get_payment_status", "get_read_type", "get_tenant_config", "get_usage_history", "get_verbatim_string", "get_wna_amount", "knowledge_base_search", "nws_hdd_api", "process_payment_ach", "process_payment_cc", "request_credit_refund", "run_high_bill_diagnosis", "send_duplicate_bill", "send_info_link", "set_session_state", "show_bill_breakdown_card", "show_bill_summary_card", "show_bill_trend_card", "show_checklist_card", "show_compare_table_card", "show_emergency_card", "show_insights_carousel", "show_options_card", "show_payment_receipt_card", "show_quick_actions", "show_weather_usage_card", "update_autopay", "update_language", "washgas_website"],
+  "beforeModelCallbacks": [{
+    "pythonCode": "agents/billing_payments_agent/before_model_callbacks/before_model_callbacks_01/python_code.py"
+  }],
+  "afterModelCallbacks": [{
+    "pythonCode": "agents/billing_payments_agent/after_model_callbacks/after_model_callbacks_01/python_code.py"
+  }]
+}

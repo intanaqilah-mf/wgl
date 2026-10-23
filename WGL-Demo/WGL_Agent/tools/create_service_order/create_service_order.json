@@ -1,0 +1,10 @@
+{
+  "name": "create_service_order",
+  "pythonFunction": {
+    "name": "create_service_order",
+    "pythonCode": "tools/create_service_order/python_function/python_code.py",
+    "description": "Creates a service order and its appointment for start, stop, transfer, reconnect or meter_test,\nafter the customer picked one of the offered slots. A transfer (a move) creates the stop order for\nthe old address and the start order for the new address together: two orders, two confirmation\nnumbers (stop first, then start) and one confirmation text that carries both. Needs an\nauthenticated caller and a read-back of the service address. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    type: start, stop, transfer, reconnect or meter_test (REQUIRED).\n    address: Standardized service address, read back to the customer (REQUIRED).\n    date: Appointment date, YYYY-MM-DD (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n    slot: The chosen slot exactly as returned by fetch_technician_slots, for example\n        2026-10-21 8am-12pm (REQUIRED). For a transfer this is the slot of the start at the new address.\n    stop_slot: Transfer only: the chosen slot for closing the old address, exactly as returned by\n        fetch_technician_slots with type stop. Leave empty to stop in the same slot as the start.\n\nReturns:\n    dict with ok, confirmation_numbers (stop first for a transfer), orders (type, confirmation_number,\n    date, window and address of each order), appointment_id, appointment_ids, date, window, address,\n    confirmation_texts_sent and, for a transfer, agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "create_service_order"
+}

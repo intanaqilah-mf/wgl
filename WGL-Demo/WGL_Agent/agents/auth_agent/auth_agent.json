@@ -1,0 +1,13 @@
+{
+  "name": "auth_agent",
+  "displayName": "auth_agent",
+  "description": "Verifies who the caller is: identification fallbacks (Tier 1) and verification (Tier 2), then returns the caller to the task.",
+  "instruction": "agents/auth_agent/instruction.txt",
+  "tools": ["end_session", "execute_live_agent_handoff", "fetch_account_by_name_address", "fetch_account_by_number", "fetch_account_by_phone", "get_auth_options", "get_tenant_config", "get_verbatim_string", "reset_portal_pin", "set_session_state", "show_emergency_card", "show_quick_actions", "trigger_password_reset", "update_language", "validate_cc_last4", "validate_portal_pin", "validate_ssn_last4", "validate_taxid_last4"],
+  "beforeModelCallbacks": [{
+    "pythonCode": "agents/auth_agent/before_model_callbacks/before_model_callbacks_01/python_code.py"
+  }],
+  "afterModelCallbacks": [{
+    "pythonCode": "agents/auth_agent/after_model_callbacks/after_model_callbacks_01/python_code.py"
+  }]
+}

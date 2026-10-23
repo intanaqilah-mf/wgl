@@ -1,0 +1,10 @@
+{
+  "name": "enrol_budget_plan",
+  "pythonFunction": {
+    "name": "enrol_budget_plan",
+    "pythonCode": "tools/enrol_budget_plan/python_function/python_code.py",
+    "description": "Enrolls the customer in a Budget Plan with a fixed monthly amount. Needs an authenticated caller\nand the customer\u0027s clear agreement to the amount. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    monthly_amount: Monthly installment in dollars the customer agreed to (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number and monthly_amount."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "enrol_budget_plan"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "get_account_number_masked",
+  "pythonFunction": {
+    "name": "get_account_number_masked",
+    "pythonCode": "tools/get_account_number_masked/python_function/python_code.py",
+    "description": "Returns the account number in masked form showing only the last 4 digits. This is the only form\nof the account number that may be spoken or shown. Needs an identified caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and masked_account_number, for example XXXX-XXXX-1234."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_account_number_masked"
+}

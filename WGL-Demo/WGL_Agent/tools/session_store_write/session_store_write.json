@@ -1,0 +1,10 @@
+{
+  "name": "session_store_write",
+  "pythonFunction": {
+    "name": "session_store_write",
+    "pythonCode": "tools/session_store_write/python_function/python_code.py",
+    "description": "Writes the session close-out summary (language, authentication path, handoff reason,\nconfirmation numbers) to the session store. Idempotent: calling it again updates the same\nrecord. No spoken pacing is needed; this tool is silent and background.\n\nArgs:\n    session_context: Short plain-text summary of the session: what was done and any\n        confirmation numbers (REQUIRED). Never include verification digits.\n\nReturns:\n    dict with ok."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "session_store_write"
+}

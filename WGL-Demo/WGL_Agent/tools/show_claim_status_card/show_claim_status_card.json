@@ -1,0 +1,60 @@
+{
+  "name": "show_claim_status_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_claim_status_card",
+  "widgetTool": {
+    "name": "show_claim_status_card",
+    "description": "Shows a rebate claim progress tracker card on chat with the steps Received, Reviewing, Approved and Paid. Use it after start_rebate_claim or get_rebate_claim_status when the caller is on chat. Pass the card field of the tool as is. No spoken pacing is needed. Call shape: name is always cx-show-claim-status-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-claim-status-card (the card element this tool renders).",
+          "enum": ["cx-show-claim-status-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "claim_id": {
+              "type": "STRING",
+              "description": "Claim number such as RB-3001."
+            },
+            "note": {
+              "type": "STRING",
+              "description": "Optional line under the tracker."
+            },
+            "steps": {
+              "type": "ARRAY",
+              "description": "Tracker steps in order.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "label": {
+                    "type": "STRING",
+                    "description": "Step name."
+                  },
+                  "state": {
+                    "type": "STRING",
+                    "description": "One of done, current or todo."
+                  }
+                }
+              }
+            }
+          },
+          "required": ["claim_id", "steps"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Claim status"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Say the claim number and the current step in one short sentence, and mention the usual timeframe from the note."
+    }
+  }
+}

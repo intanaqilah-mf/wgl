@@ -1,0 +1,7 @@
+# Local folders that are not part of this repo
+/ces-twilio-adapter/
+/example/
+/script/
+C:\Users\intan.n.mohd.faddil\WGL\ces-twilio-adapter
+
+# WGL-Demo is intentionally NOT ignored

@@ -1,0 +1,28 @@
+{
+  "name": "a59c87ea-231b-4eac-b40a-dd82d0df875d",
+  "displayName": "gr_model_safety",
+  "description": "Lenient platform safety categories: blocks only high-severity content; platform default response.",
+  "enabled": true,
+  "action": {
+    "respondImmediately": {
+      "responses": [{
+        "text": "I want to keep this conversation respectful so I can help you. Quiero mantener esta conversación respetuosa para poder ayudarle. How can I help with your gas account? ¿Cómo puedo ayudarle con su cuenta de gas?"
+      }]
+    }
+  },
+  "modelSafety": {
+    "safetySettings": [{
+      "category": "HARM_CATEGORY_HATE_SPEECH",
+      "threshold": "BLOCK_ONLY_HIGH"
+    }, {
+      "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+      "threshold": "BLOCK_ONLY_HIGH"
+    }, {
+      "category": "HARM_CATEGORY_HARASSMENT",
+      "threshold": "BLOCK_ONLY_HIGH"
+    }, {
+      "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      "threshold": "BLOCK_ONLY_HIGH"
+    }]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "38fed17f-1d82-4d76-a53f-5568d67b9b19",
+  "displayName": "wgl_firestore",
+  "openApiToolset": {
+    "openApiSchema": "toolsets/wgl_firestore/open_api_toolset/open_api_schema.yaml",
+    "apiAuthentication": {
+      "serviceAccountAuthConfig": {
+        "serviceAccount": "$env_var",
+        "scopes": ["https://www.googleapis.com/auth/datastore"]
+      }
+    }
+  },
+  "description": "Generic Firestore operations (runQuery, getDocument, commit) limited to the wgl_ collections. Used only from Python tools; not assigned to any agent."
+}

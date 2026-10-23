@@ -1,0 +1,17 @@
+{
+  "name": "2f83fbbb-1b22-4ecf-a0b0-10d066d23084",
+  "displayName": "gr_content_safety",
+  "description": "Lenient content filter with no banned-phrase list; ordinary frustration and mild profanity pass. Abusive content is covered by gr_model_safety.",
+  "enabled": true,
+  "action": {
+    "respondImmediately": {
+      "responses": [{
+        "text": "I want to help you, and I understand this is frustrating. Quiero ayudarle y entiendo que esto es frustrante. Would you like me to connect you with a representative? ¿Desea que lo comunique con un representante?"
+      }]
+    }
+  },
+  "contentFilter": {
+    "matchType": "WORD_BOUNDARY_STRING_MATCH",
+    "disregardDiacritics": true
+  }
+}

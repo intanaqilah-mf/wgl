@@ -1,0 +1,10 @@
+{
+  "name": "knowledge_base_search",
+  "pythonFunction": {
+    "name": "knowledge_base_search",
+    "pythonCode": "tools/knowledge_base_search/python_function/python_code.py",
+    "description": "Searches this brand\u0027s knowledge base (FAQ, safety, tariff) in English and returns the best\nmatching articles. Answers about rates, tariffs, privacy and safety must come only from these\narticles. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    query: The customer\u0027s question in plain words (REQUIRED).\n    namespace: Knowledge namespace of this brand: WGL_FAQ, WGL_SAFETY or WGL_TARIFF for\n        Washington Gas (REQUIRED).\n\nReturns:\n    dict with ok, found, articles (topic, text, status) and agent_action; the article text is\n    English and must be translated when speaking Spanish."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "knowledge_base_search"
+}

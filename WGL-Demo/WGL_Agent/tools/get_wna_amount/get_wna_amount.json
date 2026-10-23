@@ -1,0 +1,10 @@
+{
+  "name": "get_wna_amount",
+  "pythonFunction": {
+    "name": "get_wna_amount",
+    "pythonCode": "tools/get_wna_amount/python_function/python_code.py",
+    "description": "Returns the weather normalization adjustment amount and direction (surcharge or credit). Applies\nonly to an account that carries a weather normalization amount (a Washington Gas Virginia mechanism). Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, applies and, when it applies, wna_amount and wna_direction."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_wna_amount"
+}

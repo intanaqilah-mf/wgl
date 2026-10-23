@@ -1,0 +1,91 @@
+{
+  "name": "show_compare_table_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_compare_table_card",
+  "widgetTool": {
+    "name": "show_compare_table_card",
+    "description": "Shows a small comparison table on chat: up to four columns and six rows, with one column optionally highlighted. Use it to compare payment plans side by side or this month with last month. Chat only; never on voice. Cells are display strings with money already formatted. Facts come only from tool results. No spoken pacing is needed. Call shape: name is always cx-show-compare-table-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-compare-table-card (the card element this tool renders).",
+          "enum": ["cx-show-compare-table-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "action_label": {
+              "type": "STRING",
+              "description": "Optional button label under the table."
+            },
+            "action_message": {
+              "type": "STRING",
+              "description": "What the button sends as the customer\u0027s next message."
+            },
+            "caption": {
+              "type": "STRING",
+              "description": "Optional one short line under the table."
+            },
+            "columns": {
+              "type": "ARRAY",
+              "description": "Column headings, up to four, for example Monthly and Down payment.",
+              "items": {
+                "type": "STRING"
+              }
+            },
+            "highlight_column": {
+              "type": "INTEGER",
+              "description": "Optional zero-based index of the column to highlight."
+            },
+            "highlight_label": {
+              "type": "STRING",
+              "description": "Optional tiny tag above the highlighted column heading."
+            },
+            "rows": {
+              "type": "ARRAY",
+              "description": "Up to six rows.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "cells": {
+                    "type": "ARRAY",
+                    "description": "One display string per column, in column order.",
+                    "items": {
+                      "type": "STRING"
+                    }
+                  },
+                  "label": {
+                    "type": "STRING",
+                    "description": "Row name, for example 12 months."
+                  },
+                  "note": {
+                    "type": "STRING",
+                    "description": "Optional tiny line under the row name."
+                  }
+                },
+                "required": ["label", "cells"]
+              }
+            },
+            "title": {
+              "type": "STRING",
+              "description": "Heading, for example Payment plans for [amount] past due."
+            }
+          },
+          "required": ["title", "columns", "rows"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Compare"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write at most two short sentences, about 25 words: the headline the table answers and one short question. Never repeat the table values. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+    }
+  }
+}

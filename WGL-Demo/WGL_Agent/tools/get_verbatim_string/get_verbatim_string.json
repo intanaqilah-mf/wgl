@@ -1,0 +1,10 @@
+{
+  "name": "get_verbatim_string",
+  "pythonFunction": {
+    "name": "get_verbatim_string",
+    "pythonCode": "tools/get_verbatim_string/python_function/python_code.py",
+    "description": "Looks up a legally required verbatim string by key in the caller\u0027s language. The system speaks\nthe exact text itself on the next step, so never repeat, paraphrase or add to it. Placeholders\nsuch as brand, date and hours are filled automatically. No spoken pacing is needed; this tool is\nsilent and instant.\n\nArgs:\n    key: Verbatim key such as quality_monitoring_consent, greeting_main_guest,\n        emergency_safety_instruction, empathy_protocol, live_agent_handoff or after_hours_message\n        (REQUIRED).\n    language: EN or ES; empty uses the current session language.\n    params: Optional JSON object text with extra placeholder values; usually empty.\n\nReturns:\n    dict with ok, key, status (confirmed or demo_placeholder), language, text and\n    agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_verbatim_string"
+}

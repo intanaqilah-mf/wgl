@@ -1,0 +1,10 @@
+{
+  "name": "check_service_territory",
+  "pythonFunction": {
+    "name": "check_service_territory",
+    "pythonCode": "tools/check_service_territory/python_function/python_code.py",
+    "description": "Checks whether a standardized address is inside this brand\u0027s service territory. Works for\nguests. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    address: The standardized service address (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found and in_territory."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "check_service_territory"
+}

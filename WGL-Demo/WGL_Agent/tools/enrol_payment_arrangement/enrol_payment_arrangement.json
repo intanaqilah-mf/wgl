@@ -1,0 +1,10 @@
+{
+  "name": "enrol_payment_arrangement",
+  "pythonFunction": {
+    "name": "enrol_payment_arrangement",
+    "pythonCode": "tools/enrol_payment_arrangement/python_function/python_code.py",
+    "description": "Enrolls the customer in a payment arrangement plan. Refuses until the payment arrangement\ndisclosure has been spoken. When the plan needs a down payment, the enrollment stays pending\nuntil the down payment is paid. Needs an authenticated caller who agreed. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    plan_id: Plan id from get_pa_options (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number, status (active or pending_downpayment), monthly_amount,\n    term_months, down_payment_required and down_payment_amount."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "enrol_payment_arrangement"
+}

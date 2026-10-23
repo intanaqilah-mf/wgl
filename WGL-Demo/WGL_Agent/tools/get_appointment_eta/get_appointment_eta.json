@@ -1,0 +1,10 @@
+{
+  "name": "get_appointment_eta",
+  "pythonFunction": {
+    "name": "get_appointment_eta",
+    "pythonCode": "tools/get_appointment_eta/python_function/python_code.py",
+    "description": "Gives the live status of an appointment: scheduled, en route or delayed, with the expected\narrival and any delay. When the delay is over 30 minutes the agent offers to reschedule. Needs\nan identified caller. Before calling this tool, speak a brief conversational pacing phrase while\nit runs.\n\nArgs:\n    appt_id: Appointment id from get_active_appointments (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, status, eta, delay_minutes and proactive_reschedule_offer."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_appointment_eta"
+}

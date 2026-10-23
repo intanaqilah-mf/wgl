@@ -1,0 +1,20 @@
+{
+  "name": "root_agent",
+  "displayName": "root_agent",
+  "description": "Opens every session, keeps the caller safe, identifies the caller silently and routes to the right specialist.",
+  "instruction": "agents/root_agent/instruction.txt",
+  "tools": ["check_outage_status", "create_callback_ticket", "end_session", "execute_live_agent_handoff", "fetch_account_by_ani", "get_account_insights", "get_tenant_config", "get_verbatim_string", "send_info_link", "session_store_write", "set_session_state", "show_callback_form", "show_csat_card", "show_emergency_card", "show_insights_carousel", "show_quick_actions", "update_language"],
+  "childAgents": ["account_support_agent", "auth_agent", "billing_payments_agent", "hardship_agent", "service_agent"],
+  "beforeAgentCallbacks": [{
+    "pythonCode": "agents/root_agent/before_agent_callbacks/before_agent_callbacks_01/python_code.py"
+  }],
+  "afterAgentCallbacks": [{
+    "pythonCode": "agents/root_agent/after_agent_callbacks/after_agent_callbacks_01/python_code.py"
+  }],
+  "beforeModelCallbacks": [{
+    "pythonCode": "agents/root_agent/before_model_callbacks/before_model_callbacks_01/python_code.py"
+  }],
+  "afterModelCallbacks": [{
+    "pythonCode": "agents/root_agent/after_model_callbacks/after_model_callbacks_01/python_code.py"
+  }]
+}

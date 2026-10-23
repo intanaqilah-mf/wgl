@@ -1,0 +1,77 @@
+{
+  "name": "show_weather_usage_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_weather_usage_card",
+  "widgetTool": {
+    "name": "show_weather_usage_card",
+    "description": "Shows a card on chat that sets each month\u0027s gas usage next to the heating degree days (how cold it was). Use it after get_usage_history when its months carry hdd and the caller is on chat, to show why usage rose; on voice, say the same in short sentences. Card values come only from that tool. No spoken pacing is needed. Call shape: name is always cx-show-weather-usage-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-weather-usage-card (the card element this tool renders).",
+          "enum": ["cx-show-weather-usage-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "months": {
+              "type": "ARRAY",
+              "description": "One entry per month, oldest first.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "hdd": {
+                    "type": "NUMBER",
+                    "description": "Heating degree days for the month."
+                  },
+                  "period": {
+                    "type": "STRING",
+                    "description": "Short label such as Jan 2026."
+                  },
+                  "usage": {
+                    "type": "NUMBER",
+                    "description": "Usage in the unit."
+                  }
+                }
+              }
+            },
+            "stats": {
+              "type": "ARRAY",
+              "description": "Optional. The weather_stats of get_usage_history exactly as returned (heating degree days against last month, gas used this month, the peak month): shown as a facts row under the chart.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "label": {
+                    "type": "STRING",
+                    "description": "Fact name."
+                  },
+                  "value": {
+                    "type": "STRING",
+                    "description": "Fact value with its unit."
+                  }
+                }
+              }
+            },
+            "unit": {
+              "type": "STRING",
+              "description": "Usage unit from get_usage_history."
+            }
+          },
+          "required": ["unit", "months"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Usage and weather"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write one short lead line, the shape, with the real figures: Usage follows the cold: [month] peaked at [usage] therms. The facts row of the card shows the heating degree days, this month\u0027s gas used and the peak month, so do not repeat them in a list."
+    }
+  }
+}

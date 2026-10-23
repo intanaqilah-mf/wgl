@@ -1,0 +1,10 @@
+{
+  "name": "update_notification_preferences",
+  "pythonFunction": {
+    "name": "update_notification_preferences",
+    "pythonCode": "tools/update_notification_preferences/python_function/python_code.py",
+    "description": "Updates which notifications the customer gets by text or email. STOP and START requests for\ntexts are honored. Needs an authenticated caller. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    prefs: JSON object text mapping an event name to its channels, for example an event with\n        sms and email set to true or false (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and notification_prefs after the change."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "update_notification_preferences"
+}

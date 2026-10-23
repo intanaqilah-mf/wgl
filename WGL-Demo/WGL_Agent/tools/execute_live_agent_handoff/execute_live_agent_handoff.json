@@ -1,0 +1,10 @@
+{
+  "name": "execute_live_agent_handoff",
+  "pythonFunction": {
+    "name": "execute_live_agent_handoff",
+    "pythonCode": "tools/execute_live_agent_handoff/python_function/python_code.py",
+    "description": "Records a simulated live-agent handoff (reason, queue, context packet) in Firestore. The spoken\nhandoff text comes from the verbatim strings and the session then ends. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    reason: Reason code such as user_requested_agent, no_input_escalation,\n        auth_failure_handoff, auth_failure_exit, identification_failure_handoff, system_unavailable,\n        pa_downpayment_failed, disambig_max_attempts or emergency (REQUIRED).\n    context: Short plain-text summary of what the customer needs, without any digits used for\n        verification.\n    queue: Queue name: billing, service, collections, medical, bereavement, regulatory or\n        emergency; empty uses the escalation topic.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, handoff_id, queue, reason, esr_available and, when the emergency queue is\n    unavailable, emergency_number."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "execute_live_agent_handoff"
+}

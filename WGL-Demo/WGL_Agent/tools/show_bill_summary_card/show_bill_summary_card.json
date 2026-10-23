@@ -1,0 +1,59 @@
+{
+  "name": "show_bill_summary_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_bill_summary_card",
+  "widgetTool": {
+    "name": "show_bill_summary_card",
+    "description": "Shows a bill or payment summary card on chat: amount, convenience fee, due date, confirmation number and the card by its last 4 digits only. Use it after a bill explanation or a payment when the caller is on chat. Values come only from tool results. No spoken pacing is needed. Call shape: name is always cx-show-bill-summary-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-bill-summary-card (the card element this tool renders).",
+          "enum": ["cx-show-bill-summary-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "amount": {
+              "type": "NUMBER",
+              "description": "Amount in dollars."
+            },
+            "card_last4": {
+              "type": "STRING",
+              "description": "Last 4 digits of the card; never a full number."
+            },
+            "confirmation_number": {
+              "type": "STRING",
+              "description": "Confirmation number from the payment tool."
+            },
+            "convenience_fee": {
+              "type": "NUMBER",
+              "description": "Convenience fee in dollars; omit when none."
+            },
+            "due_date": {
+              "type": "STRING",
+              "description": "Due date."
+            },
+            "title": {
+              "type": "STRING",
+              "description": "Card title, for example the bill period or payment confirmation."
+            }
+          },
+          "required": ["title", "amount"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Bill summary"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write one short sentence with the amount and the due date, and the confirmation number when there is one; mention a fee only when it is above zero. The card shows the other rows, so do not repeat them."
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "usps_v3_validate_address",
+  "pythonFunction": {
+    "name": "usps_v3_validate_address",
+    "pythonCode": "tools/usps_v3_validate_address/python_function/python_code.py",
+    "description": "Validates and standardizes a US street address against the stored address table. Returns the\nstandard form with a delivery confirmation code (Y, S, D or N) or an error code\nADDRESS_NOT_FOUND, MULTIPLE_ADDRESSES or INSUFFICIENT_ADDRESS. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    street: House number and street, with unit if any (REQUIRED).\n    city: City.\n    state: Two-letter state.\n    zip: Five-digit ZIP code.\n\nReturns:\n    dict with ok, standardized_address, zip_plus4 and dpvConfirmation; on failure ok is false\n    with error_code and agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "usps_v3_validate_address"
+}

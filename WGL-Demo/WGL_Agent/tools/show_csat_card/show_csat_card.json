@@ -1,0 +1,39 @@
+{
+  "name": "show_csat_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_csat_card",
+  "widgetTool": {
+    "name": "show_csat_card",
+    "description": "Shows a satisfaction rating card on chat at the end of the session. No spoken pacing is needed. Call shape: name is always cx-show-csat-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-csat-card (the card element this tool renders).",
+          "enum": ["cx-show-csat-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "prompt": {
+              "type": "STRING",
+              "description": "The satisfaction question."
+            }
+          },
+          "required": ["prompt"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "How did we do?"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Ask the satisfaction question in one short sentence and invite a rating from one to five."
+    }
+  }
+}

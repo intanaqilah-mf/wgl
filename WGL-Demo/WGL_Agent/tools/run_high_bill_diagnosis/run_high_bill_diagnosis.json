@@ -1,0 +1,10 @@
+{
+  "name": "run_high_bill_diagnosis",
+  "pythonFunction": {
+    "name": "run_high_bill_diagnosis",
+    "pythonCode": "tools/run_high_bill_diagnosis/python_function/python_code.py",
+    "description": "Explains a high bill or high usage with one call. Runs the billing history, read type, period\ndays, weather and weather normalization lookups and returns the raw numbers, an attribution of\nthe increase that reconciles to the bill difference, and flags. Explain only from these numbers.\nReads only; needs an identified caller. Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n\nReturns:\n    dict with ok, lookups, history, read_type, period_days, weather, usage, wna, bill_delta,\n    attribution, reconciliation and flags (estimated_read, unexplained_anomaly,\n    seasonal_spike, arrears_present, jurisdiction, wna_applicable); on failure ok is false\n    with agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "run_high_bill_diagnosis"
+}

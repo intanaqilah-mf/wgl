@@ -1,0 +1,324 @@
+openapi: 3.0.0
+info:
+  title: WGL Firestore
+  description: Generic Firestore REST operations limited to the wgl_ collections. Called only from Python tools; never assigned to an agent.
+  version: 1.0.0
+servers:
+  - url: $env_var
+    description: Firestore REST API
+security:
+  - GoogleBearerAuth: []
+paths:
+  "/v1/projects/emvnzir-canada-song/databases/acn-bank-fs-db/documents:runQuery":
+    post:
+      operationId: runQuery
+      summary: Query one wgl_ collection with EQUAL filters.
+      description: Runs a structured query on one collection. Use one fieldFilter with op EQUAL, or a compositeFilter AND of EQUAL fieldFilters. No orderBy and no range filters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - structuredQuery
+              properties:
+                structuredQuery:
+                  type: object
+                  required:
+                    - from
+                    - where
+                  properties:
+                    from:
+                      type: array
+                      description: The collection to query.
+                      items:
+                        type: object
+                        required:
+                          - collectionId
+                        properties:
+                          collectionId:
+                            type: string
+                            description: A wgl_ collection.
+                            enum:
+                              - wgl_tenant_config
+                              - wgl_verbatim_strings
+                              - wgl_customers
+                              - wgl_billing_periods
+                              - wgl_weather_hdd
+                              - wgl_payments
+                              - wgl_pa_plans
+                              - wgl_pa_enrollments
+                              - wgl_extensions
+                              - wgl_assistance_programs
+                              - wgl_addresses
+                              - wgl_technician_slots
+                              - wgl_service_orders
+                              - wgl_appointments
+                              - wgl_meter_reads
+                              - wgl_outages
+                              - wgl_outage_incidents
+                              - wgl_complaints
+                              - wgl_callback_tickets
+                              - wgl_refund_requests
+                              - wgl_handoffs
+                              - wgl_notifications
+                              - wgl_kb_articles
+                              - wgl_payment_locations
+                              - wgl_sessions
+                              - wgl_session_events
+                              - wgl_auth_secrets
+                              - wgl_payment_methods
+                              - wgl_counters
+                              - wgl_demo_controls
+                              - wgl_rebate_claims
+                          allDescendants:
+                            type: boolean
+                            description: Always false; collections are flat.
+                    where:
+                      type: object
+                      description: One fieldFilter, or a compositeFilter that ANDs EQUAL fieldFilters.
+                      properties:
+                        fieldFilter:
+                          $ref: "#/components/schemas/FieldFilter"
+                        compositeFilter:
+                          type: object
+                          required:
+                            - op
+                            - filters
+                          properties:
+                            op:
+                              type: string
+                              enum:
+                                - AND
+                            filters:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  fieldFilter:
+                                    $ref: "#/components/schemas/FieldFilter"
+                    limit:
+                      type: integer
+                      description: Maximum number of documents to return.
+      responses:
+        "200":
+          description: Matching documents; an entry without a document means no match.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    document:
+                      $ref: "#/components/schemas/Document"
+                    readTime:
+                      type: string
+  "/v1/projects/emvnzir-canada-song/databases/acn-bank-fs-db/documents/{collectionId}/{documentId}":
+    get:
+      operationId: getDocument
+      summary: Read one document by id.
+      description: Reads one document from a wgl_ collection by its document id.
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          description: A wgl_ collection.
+          schema:
+            type: string
+            enum:
+              - wgl_tenant_config
+              - wgl_verbatim_strings
+              - wgl_customers
+              - wgl_billing_periods
+              - wgl_weather_hdd
+              - wgl_payments
+              - wgl_pa_plans
+              - wgl_pa_enrollments
+              - wgl_extensions
+              - wgl_assistance_programs
+              - wgl_addresses
+              - wgl_technician_slots
+              - wgl_service_orders
+              - wgl_appointments
+              - wgl_meter_reads
+              - wgl_outages
+              - wgl_outage_incidents
+              - wgl_complaints
+              - wgl_callback_tickets
+              - wgl_refund_requests
+              - wgl_handoffs
+              - wgl_notifications
+              - wgl_kb_articles
+              - wgl_payment_locations
+              - wgl_sessions
+              - wgl_session_events
+              - wgl_auth_secrets
+              - wgl_payment_methods
+              - wgl_counters
+              - wgl_demo_controls
+              - wgl_rebate_claims
+        - name: documentId
+          in: path
+          required: true
+          description: The document id; contains no slash.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+  "/v1/projects/emvnzir-canada-song/databases/acn-bank-fs-db/documents:commit":
+    post:
+      operationId: commit
+      summary: Write documents atomically.
+      description: Commits one or more writes atomically. Each write sets fields on one document in a wgl_ collection, with an optional existence precondition, server timestamps and counter increments.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - writes
+              properties:
+                writes:
+                  type: array
+                  description: The writes to apply together.
+                  items:
+                    type: object
+                    required:
+                      - update
+                    properties:
+                      update:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                          name:
+                            type: string
+                            description: Full document path under projects/emvnzir-canada-song/databases/acn-bank-fs-db/documents/ in a wgl_ collection.
+                          fields:
+                            type: object
+                            description: Field name to typed value.
+                            additionalProperties:
+                              $ref: "#/components/schemas/FirestoreValue"
+                      updateMask:
+                        type: object
+                        properties:
+                          fieldPaths:
+                            type: array
+                            items:
+                              type: string
+                      updateTransforms:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - fieldPath
+                          properties:
+                            fieldPath:
+                              type: string
+                            setToServerValue:
+                              type: string
+                              enum:
+                                - REQUEST_TIME
+                            increment:
+                              $ref: "#/components/schemas/FirestoreValue"
+                      currentDocument:
+                        type: object
+                        properties:
+                          exists:
+                            type: boolean
+      responses:
+        "200":
+          description: Write results, including transform results for increments.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  writeResults:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        transformResults:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/FirestoreValue"
+components:
+  securitySchemes:
+    GoogleBearerAuth:
+      type: http
+      scheme: bearer
+      description: Service account bearer token for scope https://www.googleapis.com/auth/datastore.
+  schemas:
+    FieldFilter:
+      type: object
+      required:
+        - field
+        - op
+        - value
+      properties:
+        field:
+          type: object
+          required:
+            - fieldPath
+          properties:
+            fieldPath:
+              type: string
+        op:
+          type: string
+          enum:
+            - EQUAL
+        value:
+          $ref: "#/components/schemas/FirestoreValue"
+    FirestoreValue:
+      type: object
+      description: A Firestore typed value; set exactly one member.
+      properties:
+        stringValue:
+          type: string
+        integerValue:
+          type: string
+          description: Integers are string encoded.
+        doubleValue:
+          type: number
+        booleanValue:
+          type: boolean
+        timestampValue:
+          type: string
+        nullValue:
+          type: string
+          enum:
+            - NULL_VALUE
+        arrayValue:
+          type: object
+          properties:
+            values:
+              type: array
+              items:
+                type: object
+        mapValue:
+          type: object
+          properties:
+            fields:
+              type: object
+    Document:
+      type: object
+      properties:
+        name:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/FirestoreValue"
+        createTime:
+          type: string
+        updateTime:
+          type: string

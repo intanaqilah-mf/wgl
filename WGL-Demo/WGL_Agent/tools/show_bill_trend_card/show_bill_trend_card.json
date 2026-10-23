@@ -1,0 +1,115 @@
+{
+  "name": "show_bill_trend_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_bill_trend_card",
+  "widgetTool": {
+    "name": "show_bill_trend_card",
+    "description": "Shows a 12-month bill bar chart card on chat, with the current month highlighted. Use it after get_bill_history when the caller is on chat, for a high bill or a question about how bills have changed; on voice, say the same in short sentences instead. Pass the card field of get_bill_history as is. Card values come only from that tool. No spoken pacing is needed. Call shape: name is always cx-show-bill-trend-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-bill-trend-card (the card element this tool renders).",
+          "enum": ["cx-show-bill-trend-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "action_label": {
+              "type": "STRING",
+              "description": "Optional button label shown under the chart, for example See weather vs usage; use it to offer the weather view instead of a second card."
+            },
+            "action_message": {
+              "type": "STRING",
+              "description": "What the button sends as the customer\u0027s next message, for example Show me how the weather lined up with my usage."
+            },
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen lead shown above the card in place of the long text part. Pass it only with the high bill explanation: one short empathetic line of about six words with no figures, in the customer\u0027s language, for example That is a big jump, and I see why. The website hides the long spoken text and shows this line."
+            },
+            "extra_actions": {
+              "type": "ARRAY",
+              "description": "Optional. Up to two more chips beside the first button, for example the Budget Plan offer when the account insights allow it.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "label": {
+                    "type": "STRING",
+                    "description": "Chip text."
+                  },
+                  "message": {
+                    "type": "STRING",
+                    "description": "What the chip sends as the customer\u0027s next message."
+                  }
+                }
+              }
+            },
+            "highlight_note": {
+              "type": "STRING",
+              "description": "Optional note, for example $46 higher than last month."
+            },
+            "months": {
+              "type": "ARRAY",
+              "description": "One entry per month, oldest first, exactly as returned by get_bill_history.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "amount": {
+                    "type": "NUMBER",
+                    "description": "Bill amount in dollars."
+                  },
+                  "is_current": {
+                    "type": "BOOLEAN",
+                    "description": "True only for the latest bill."
+                  },
+                  "period": {
+                    "type": "STRING",
+                    "description": "Short label such as Oct 2025."
+                  }
+                }
+              }
+            },
+            "reasons": {
+              "type": "ARRAY",
+              "description": "Optional. Every reason for the change, exactly as run_high_bill_diagnosis returned them (largest first, up to 6): shown as a list under the chart with its amount.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "amount": {
+                    "type": "NUMBER",
+                    "description": "Dollars this reason added (positive) or removed (negative)."
+                  },
+                  "direction": {
+                    "type": "STRING",
+                    "description": "up, down or flat.",
+                    "enum": ["up", "down", "flat"]
+                  },
+                  "icon": {
+                    "type": "STRING",
+                    "description": "Optional icon name: flame, calendar, info, money, check, home, card, bank, clock or phone."
+                  },
+                  "label": {
+                    "type": "STRING",
+                    "description": "What caused it, for example Colder weather, more heating."
+                  }
+                }
+              }
+            }
+          },
+          "required": ["months"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Bill trend"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "When a bill diagnosis was run (the high bill explanation): write the full explanation exactly as a person would say it on a phone call, in plain natural spoken sentences, built only from the run_high_bill_diagnosis and get_bill_history numbers and nothing invented: first how much higher or lower the bill is than last month (rounded to whole dollars, with the word about), then every reason of the reasons list, largest first, each with its amount, for example Colder weather added forty-one dollars and one cent, the longer thirty-four day billing cycle added five dollars and ninety-four cents. Say every amount in words, never digits. Use no emoji, markdown, bullets, symbols, dollar signs, line breaks or question, because the voice may read this text aloud; the short on-screen line goes only in display_text. When no diagnosis was run: one short line on the trend (the highest month and the latest bill, as bullets when you name more than two figures) without repeating the highlight note. This text is the whole reply, so write no other text and no separate pacing sentence."
+    }
+  }
+}

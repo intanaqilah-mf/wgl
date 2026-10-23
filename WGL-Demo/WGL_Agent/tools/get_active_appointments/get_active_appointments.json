@@ -1,0 +1,10 @@
+{
+  "name": "get_active_appointments",
+  "pythonFunction": {
+    "name": "get_active_appointments",
+    "pythonCode": "tools/get_active_appointments/python_function/python_code.py",
+    "description": "Lists the customer\u0027s upcoming appointments that are not cancelled. Needs an identified caller.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and appointments (appointment_id, type, slot, status)."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_active_appointments"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "check_ancp_enrollment",
+  "pythonFunction": {
+    "name": "check_ancp_enrollment",
+    "pythonCode": "tools/check_ancp_enrollment/python_function/python_code.py",
+    "description": "Checks whether a service address is enrolled in the Automatic Name Change Program (ANCP), which\naffects how a move or start is handled: when the landlord is enrolled the account transfers without\ninterruption and the tenant submits a move-in order on the customer portal. Before calling this tool, speak a brief conversational pacing phrase while it\nruns.\n\nArgs:\n    address: The standardized service address (REQUIRED).\n\nReturns:\n    dict with ok, found, ancp_enrolled and, when enrolled, agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "check_ancp_enrollment"
+}

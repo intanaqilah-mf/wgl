@@ -1,0 +1,10 @@
+{
+  "name": "submit_meter_read",
+  "pythonFunction": {
+    "name": "submit_meter_read",
+    "pythonCode": "tools/submit_meter_read/python_function/python_code.py",
+    "description": "Submits a meter reading for the next bill. A reading far outside the expected range is held\nuntil the customer reconfirms it, then submitted with a billing-review flag. Needs an\nauthenticated caller. Before calling this tool, speak a brief conversational pacing phrase while\nit runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    reading: The meter reading the customer gave (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n    reconfirmed: True only after the customer confirmed an unusual reading a second time.\n\nReturns:\n    dict with ok, submitted, confirmation_number, billing_review_flag and\n    needs_reconfirmation."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "submit_meter_read"
+}

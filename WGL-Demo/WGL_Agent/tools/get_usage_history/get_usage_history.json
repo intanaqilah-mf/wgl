@@ -1,0 +1,10 @@
+{
+  "name": "get_usage_history",
+  "pythonFunction": {
+    "name": "get_usage_history",
+    "pythonCode": "tools/get_usage_history/python_function/python_code.py",
+    "description": "Returns the customer\u0027s monthly gas usage for up to the last 12 months in therms (or CCF for\nSEMCO). Needs an identified caller. Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    months: How many months to return, 1 to 13.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, unit, months (period, usage, amount, hdd; oldest first; hdd is the heating degree days of the month and is null when unknown) and total_usage."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_usage_history"
+}

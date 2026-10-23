@@ -1,0 +1,10 @@
+{
+  "name": "set_session_state",
+  "pythonFunction": {
+    "name": "set_session_state",
+    "pythonCode": "tools/set_session_state/python_function/python_code.py",
+    "description": "Sets session state that the system acts on: the action trigger (emergency, live_agent_handoff,\nreplay_consent, return_to_origin), escalation reason and topic, route label, sentiment, the return agent and the\nsaved task for an authentication round trip. No spoken pacing is needed; this tool is silent and\ninstant.\n\nArgs:\n    _action_trigger: emergency, live_agent_handoff, replay_consent or return_to_origin; the\n        system performs the action on the next step (replay_consent speaks the recording notice).\n    _escalation_reason: Reason code for a handoff, for example user_requested_agent or\n        auth_failure_handoff or auth_failure_exit.\n    _escalation_topic: Queue for a handoff: billing, service, collections, medical,\n        bereavement, regulatory or emergency.\n    route: Module label M1 to M9 for the current topic; internal, never spoken.\n    sentiment_score: Decimal from 0.0 (calm) to 1.0 (distressed).\n    emergency_detected: true or false.\n    _return_to_agent: Name of the agent to return to after authentication.\n    pending_intent: What the customer was trying to do, saved before an authentication round\n        trip.\n    slots_json: JSON object text of the details collected so far, saved with pending_intent.\n\nReturns:\n    dict with ok and the names of the variables that were set."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "set_session_state"
+}

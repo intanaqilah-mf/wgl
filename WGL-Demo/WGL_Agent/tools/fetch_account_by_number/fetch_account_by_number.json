@@ -1,0 +1,10 @@
+{
+  "name": "fetch_account_by_number",
+  "pythonFunction": {
+    "name": "fetch_account_by_number",
+    "pythonCode": "tools/fetch_account_by_number/python_function/python_code.py",
+    "description": "Identifies the account from an account number the customer says or keys in (deepest Tier 1\nfallback). The number is never repeated back. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_num: Account number, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found and, on one match, the Identified account summary; attempts_remaining\n    on a miss."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "fetch_account_by_number"
+}

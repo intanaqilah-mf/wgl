@@ -1,0 +1,34 @@
+{
+  "app": {
+    "loggingSettings": {
+      "evaluationAudioRecordingConfig": {
+        "gcsBucket": "gs://banking-demos-storage"
+      }
+    }
+  },
+  "tools": {
+    "washgas_website": {
+      "dataStoreTool": {
+        "engineSource": {
+          "dataStoreSources": [{
+            "dataStore": {
+              "name": "projects/483471568825/locations/us/collections/default_collection/dataStores/washgas-website_1792307197191"
+            }
+          }]
+        }
+      }
+    }
+  },
+  "toolsets": {
+    "wgl_firestore": {
+      "openApiToolset": {
+        "apiAuthentication": {
+          "serviceAccountAuthConfig": {
+            "serviceAccount": "acn-bank-tool-auth@emvnzir-canada-song.iam.gserviceaccount.com"
+          }
+        },
+        "url": "https://firestore.googleapis.com"
+      }
+    }
+  }
+}

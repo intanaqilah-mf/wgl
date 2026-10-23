@@ -1,0 +1,10 @@
+{
+  "name": "get_ebill_flag",
+  "pythonFunction": {
+    "name": "get_ebill_flag",
+    "pythonCode": "tools/get_ebill_flag/python_function/python_code.py",
+    "description": "Says whether the customer is enrolled in eBill; it sets the default delivery for a duplicate\nbill (email when enrolled, mail otherwise). Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and ebil_flag."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_ebill_flag"
+}

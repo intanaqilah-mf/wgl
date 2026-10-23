@@ -1,0 +1,18 @@
+{
+  "name": "e858f002-787c-42d4-a2ca-bd22922e1927",
+  "displayName": "gr_no_account_number",
+  "description": "BR-GU-021: a full account number never appears in output; only the last 4 digits may be spoken or shown.",
+  "enabled": true,
+  "action": {
+    "respondImmediately": {
+      "responses": [{
+        "text": "For your security I can only share the last four digits of your account number. Por su seguridad solo puedo compartir los últimos cuatro dígitos de su número de cuenta."
+      }]
+    }
+  },
+  "codeCallback": {
+    "afterModelCallback": {
+      "pythonCode": "guardrails/gr_no_account_number/code_callback/after_model_callback/python_code.py"
+    }
+  }
+}

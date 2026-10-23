@@ -1,0 +1,10 @@
+{
+  "name": "send_sms_account_number",
+  "pythonFunction": {
+    "name": "send_sms_account_number",
+    "pythonCode": "tools/send_sms_account_number/python_function/python_code.py",
+    "description": "Sends the full account number by text message to the mobile number on file. It is never spoken\nor shown in chat. Needs an authenticated caller. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and sent_to_last4 (last 4 digits of the mobile number)."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "send_sms_account_number"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "update_autopay",
+  "pythonFunction": {
+    "name": "update_autopay",
+    "pythonCode": "tools/update_autopay/python_function/python_code.py",
+    "description": "Enrolls, updates or cancels AutoPay using a payment method already on file. A new card or bank\naccount cannot be added in this call. Needs an authenticated caller. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    action: enrol, update or cancel (REQUIRED).\n    payment_method: card or bank, or the last 4 digits of a method on file; not needed for\n        cancel.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, action, confirmation_number and, unless cancelled, method_type and\n    method_last4."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "update_autopay"
+}

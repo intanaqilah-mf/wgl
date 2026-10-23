@@ -1,0 +1,10 @@
+{
+  "name": "fetch_account_by_phone",
+  "pythonFunction": {
+    "name": "fetch_account_by_phone",
+    "pythonCode": "tools/fetch_account_by_phone/python_function/python_code.py",
+    "description": "Identifies the account from a mobile number the customer gives (Tier 1 fallback). When several\naccounts share the number, pass the street the customer chose in service_address to pick one.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    phone: The customer\u0027s mobile number, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n    service_address: Street of the account the customer chose when several accounts matched;\n        leave empty on the first call.\n\nReturns:\n    dict with ok, found, count, accounts (account_id and service_address only) and, on one\n    match, the Identified account summary; attempts_remaining on a miss."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "fetch_account_by_phone"
+}

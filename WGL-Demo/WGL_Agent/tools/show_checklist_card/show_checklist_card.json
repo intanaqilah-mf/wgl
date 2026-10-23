@@ -1,0 +1,79 @@
+{
+  "name": "show_checklist_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_checklist_card",
+  "widgetTool": {
+    "name": "show_checklist_card",
+    "description": "Shows a short checklist on chat: up to six items, each with an icon and an optional detail line, as bullets or numbered steps. Use it for what to know before starting or moving service (notice, fees, access), how to enrol or send a meter reading, and the ways to pay. Chat only; never on voice. Facts come only from tool results and knowledge base answers. No spoken pacing is needed. Call shape: name is always cx-show-checklist-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-checklist-card (the card element this tool renders).",
+          "enum": ["cx-show-checklist-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "action_label": {
+              "type": "STRING",
+              "description": "Optional button label under the list."
+            },
+            "action_message": {
+              "type": "STRING",
+              "description": "What the button sends as the customer\u0027s next message."
+            },
+            "footnote": {
+              "type": "STRING",
+              "description": "Optional one short line under the list."
+            },
+            "items": {
+              "type": "ARRAY",
+              "description": "Up to six items.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "detail": {
+                    "type": "STRING",
+                    "description": "Optional one short detail line, for example an amount."
+                  },
+                  "icon": {
+                    "type": "STRING",
+                    "description": "Optional icon name, shown as an SVG (never write an emoji here).",
+                    "enum": ["card", "bank", "calendar", "home", "flame", "check", "money", "info", "clock", "phone"]
+                  },
+                  "text": {
+                    "type": "STRING",
+                    "description": "The point, under about ten words."
+                  }
+                },
+                "required": ["text"]
+              }
+            },
+            "style": {
+              "type": "STRING",
+              "description": "bullets (default, one icon per item) or steps (numbered).",
+              "enum": ["bullets", "steps"]
+            },
+            "title": {
+              "type": "STRING",
+              "description": "Heading, for example Moving your gas service."
+            }
+          },
+          "required": ["title", "items"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Good to know"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write at most two short sentences, about 25 words: a warm lead and, when a question is needed, one short question. Never repeat the checklist items. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+    }
+  }
+}

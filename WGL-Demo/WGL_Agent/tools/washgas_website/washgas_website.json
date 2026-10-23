@@ -1,0 +1,35 @@
+{
+  "name": "f7f1de79-54cb-4958-bff4-857d4c82d809",
+  "dataStoreTool": {
+    "name": "washgas_website",
+    "description": "Searches the Washington Gas website for general customer questions about billing and payment options, assistance programmes, safety information, moving and starting service, rebates and savings, and company information. Use it only when the knowledge base search does not answer the question. Do not use it for account-specific data, exact fees, limits or hours, or for emergency instructions. Before calling this tool, speak a brief natural bridge phrase such as \u0027Let me look that up for you\u0027 so the caller never hears silence.",
+    "engineSource": {
+      "dataStoreSources": [{
+        "dataStore": {
+          "name": "$env_var",
+          "engineType": "SEARCH_ENGINE"
+        }
+      }]
+    },
+    "modalityConfigs": [{
+      "modalityType": "TEXT"
+    }, {
+      "modalityType": "AUDIO",
+      "rewriterConfig": {
+        "modelSettings": {
+        }
+      },
+      "summarizationConfig": {
+        "modelSettings": {
+        }
+      },
+      "groundingConfig": {
+        "groundingLevel": 3.0
+      }
+    }],
+    "filterParameterBehavior": "NEVER_INCLUDE"
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "washgas_website",
+  "timeout": "5s"
+}

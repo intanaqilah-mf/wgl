@@ -1,0 +1,10 @@
+{
+  "name": "get_billing_history",
+  "pythonFunction": {
+    "name": "get_billing_history",
+    "pythonCode": "tools/get_billing_history/python_function/python_code.py",
+    "description": "Returns the customer\u0027s most recent billing periods (dates, days, amount, usage, read type). Use\nit for questions about past bills. Needs an identified caller. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    periods: How many recent periods to return, 1 to 13.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and periods (newest first), each with period, start, end, days, amount,\n    usage, unit, read_type and rate_per_unit."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_billing_history"
+}

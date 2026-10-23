@@ -1,0 +1,54 @@
+{
+  "name": "show_usage_history_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_usage_history_card",
+  "widgetTool": {
+    "name": "show_usage_history_card",
+    "description": "Shows a 12-month gas usage bar chart card on chat. Use it after get_usage_history when the caller is on chat; on voice, speak the usage in prose instead. Card values come only from get_usage_history. No spoken pacing is needed. Call shape: name is always cx-show-usage-history-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-usage-history-card (the card element this tool renders).",
+          "enum": ["cx-show-usage-history-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "months": {
+              "type": "ARRAY",
+              "description": "One entry per month, oldest first.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "period": {
+                    "type": "STRING"
+                  },
+                  "usage": {
+                    "type": "NUMBER"
+                  }
+                }
+              }
+            },
+            "unit": {
+              "type": "STRING",
+              "description": "Usage unit from get_usage_history."
+            }
+          },
+          "required": ["unit", "months"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Usage history"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write one short sentence: the highest month and the trend, using the unit. Do not read every month."
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "show_payment_receipt_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_payment_receipt_card",
+  "widgetTool": {
+    "name": "show_payment_receipt_card",
+    "description": "Shows a payment receipt card on chat after a successful payment: amount, date, confirmation number and the last 4 digits of the method. Use it after process_payment_cc or process_payment_ach when the caller is on chat; on voice, say the confirmation in short sentences. Values come only from the payment tool. No spoken pacing is needed. Call shape: name is always cx-show-payment-receipt-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-payment-receipt-card (the card element this tool renders).",
+          "enum": ["cx-show-payment-receipt-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "amount": {
+              "type": "NUMBER",
+              "description": "Amount paid in dollars."
+            },
+            "confirmation": {
+              "type": "STRING",
+              "description": "Confirmation number from the payment tool."
+            },
+            "date": {
+              "type": "STRING",
+              "description": "Payment date."
+            },
+            "method_last4": {
+              "type": "STRING",
+              "description": "Last 4 digits of the card or bank account; never a full number."
+            }
+          },
+          "required": ["amount", "confirmation"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Payment receipt"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Say the amount and the confirmation number in one short sentence, and mention any convenience fee only when it is above zero."
+    }
+  }
+}

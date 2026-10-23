@@ -1,0 +1,10 @@
+{
+  "name": "cancel_pending_payment",
+  "pythonFunction": {
+    "name": "cancel_pending_payment",
+    "pythonCode": "tools/cancel_pending_payment/python_function/python_code.py",
+    "description": "Cancels a pending payment that has not posted yet and restores the balance. Needs an\nauthenticated caller who confirmed the cancellation. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, cancellation_number, cancelled_amount and new_balance."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "cancel_pending_payment"
+}

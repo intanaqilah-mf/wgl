@@ -1,0 +1,10 @@
+{
+  "name": "enrol_amp",
+  "pythonFunction": {
+    "name": "enrol_amp",
+    "pythonCode": "tools/enrol_amp/python_function/python_code.py",
+    "description": "Enrolls a Washington Gas DC customer with arrears in the Arrearage Management Program.\nRefuses until the Arrearage Management Program enrollment disclosure has been spoken. Needs an authenticated caller who\nagreed. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and confirmation_number."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "enrol_amp"
+}

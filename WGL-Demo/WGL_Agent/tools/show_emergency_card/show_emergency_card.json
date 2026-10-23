@@ -1,0 +1,42 @@
+{
+  "name": "show_emergency_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_emergency_card",
+  "widgetTool": {
+    "name": "show_emergency_card",
+    "description": "Shows a full-screen gas emergency card on chat with the verbatim safety instruction and the emergency number. It accompanies the verbatim text and never replaces it or delays the transfer. No spoken pacing is needed. Call shape: name is always cx-show-emergency-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-emergency-card (the card element this tool renders).",
+          "enum": ["cx-show-emergency-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "emergency_number": {
+              "type": "STRING",
+              "description": "The emergency phone number; may be empty."
+            },
+            "safety_text": {
+              "type": "STRING",
+              "description": "The verbatim safety instruction text."
+            }
+          },
+          "required": ["safety_text"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Gas emergency"
+    },
+    "textResponseConfig": {
+      "type": "NONE"
+    }
+  }
+}

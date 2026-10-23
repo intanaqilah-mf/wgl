@@ -1,0 +1,58 @@
+{
+  "name": "show_appointment_confirmation",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_appointment_confirmation",
+  "widgetTool": {
+    "name": "show_appointment_confirmation",
+    "description": "Shows the appointment confirmation card on chat after a service order or an appointment change. Values come only from the tool result. No spoken pacing is needed. Call shape: name is always cx-show-appointment-confirmation and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-appointment-confirmation (the card element this tool renders).",
+          "enum": ["cx-show-appointment-confirmation"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "address": {
+              "type": "STRING",
+              "description": "Service address."
+            },
+            "confirmation_numbers": {
+              "type": "ARRAY",
+              "description": "One or two confirmation numbers.",
+              "items": {
+                "type": "STRING"
+              }
+            },
+            "date": {
+              "type": "STRING",
+              "description": "Appointment date."
+            },
+            "service_type": {
+              "type": "STRING",
+              "description": "Appointment type."
+            },
+            "window": {
+              "type": "STRING",
+              "description": "Arrival window."
+            }
+          },
+          "required": ["date", "window", "confirmation_numbers"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Appointment confirmed"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Say the date, the arrival window and the confirmation number in one plain sentence."
+    }
+  }
+}

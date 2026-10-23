@@ -1,0 +1,10 @@
+{
+  "name": "create_portal_account",
+  "pythonFunction": {
+    "name": "create_portal_account",
+    "pythonCode": "tools/create_portal_account/python_function/python_code.py",
+    "description": "Creates an online portal account for the identified customer and sends a verification email.\nNeeds an identified caller. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    name: Customer\u0027s full name (REQUIRED).\n    email: Email address for the portal account, confirmed by the customer (REQUIRED).\n    address: Service address on the account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and verification_email_hint (masked)."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "create_portal_account"
+}

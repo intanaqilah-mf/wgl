@@ -1,0 +1,10 @@
+{
+  "name": "get_auth_options",
+  "pythonFunction": {
+    "name": "get_auth_options",
+    "pythonCode": "tools/get_auth_options/python_function/python_code.py",
+    "description": "Returns which Tier 2 verification methods exist for the identified account. Must be called\nbefore any validate tool; only the methods it allows may be offered. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id from the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, ssn_tax_flag (SSN or TAXID, empty when not on file), pin_set and cc_on_file.\n    Never contains any secret value."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_auth_options"
+}

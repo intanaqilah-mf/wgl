@@ -1,0 +1,10 @@
+{
+  "name": "validate_taxid_last4",
+  "pythonFunction": {
+    "name": "validate_taxid_last4",
+    "pythonCode": "tools/validate_taxid_last4/python_function/python_code.py",
+    "description": "Checks the last 4 digits of a business account\u0027s Tax ID (only when get_auth_options returned\nssn_tax_flag TAXID). The digits are never repeated back or logged. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    taxid_last4: The four digits, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "validate_taxid_last4"
+}

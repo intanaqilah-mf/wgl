@@ -1,0 +1,86 @@
+{
+  "name": "show_options_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_options_card",
+  "widgetTool": {
+    "name": "show_options_card",
+    "description": "Shows two to four tappable option rows on chat, each with an icon, a one-line benefit and an optional badge; a tap sends the option\u0027s action_message as the customer\u0027s next message. Use it for the payment methods, the payment plans or programs on offer, and the Budget Plan choices, instead of listing them in text. Chat only; never on voice. Replaces quick-action chips in that reply: never call both. Facts (amounts, plan terms, fees) come only from tool results. No spoken pacing is needed. Call shape: name is always cx-show-options-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-options-card (the card element this tool renders).",
+          "enum": ["cx-show-options-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "footnote": {
+              "type": "STRING",
+              "description": "Optional one short line under the options, for example the Virginia no-card-fee note."
+            },
+            "options": {
+              "type": "ARRAY",
+              "description": "Two to four options.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "action_message": {
+                    "type": "STRING",
+                    "description": "What the customer says when they tap it, written as a natural sentence, for example Pay with my Visa ending [last four]."
+                  },
+                  "badge": {
+                    "type": "STRING",
+                    "description": "Optional tiny tag such as No card fee or Best fit."
+                  },
+                  "benefit": {
+                    "type": "STRING",
+                    "description": "One short line on what it means for the customer, under eight words where possible."
+                  },
+                  "highlight": {
+                    "type": "BOOLEAN",
+                    "description": "True for the one option that fits best."
+                  },
+                  "icon": {
+                    "type": "STRING",
+                    "description": "Optional icon name, shown as an SVG (never write an emoji here).",
+                    "enum": ["card", "bank", "calendar", "home", "flame", "check", "money", "info", "clock", "phone"]
+                  },
+                  "id": {
+                    "type": "STRING",
+                    "description": "Short id, for example visa_on_file."
+                  },
+                  "label": {
+                    "type": "STRING",
+                    "description": "Option name, a few words, for example Visa ending [last four]."
+                  }
+                },
+                "required": ["label", "action_message"]
+              }
+            },
+            "prompt": {
+              "type": "STRING",
+              "description": "Optional one-line hint under the heading, for example Tap one to continue."
+            },
+            "title": {
+              "type": "STRING",
+              "description": "Optional short heading, for example How would you like to pay?"
+            }
+          },
+          "required": ["options"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Your options"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write at most two short sentences, about 25 words: the one fact that matters (an amount or a date) and one short question. Never name or describe the options; the card shows them. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+    }
+  }
+}

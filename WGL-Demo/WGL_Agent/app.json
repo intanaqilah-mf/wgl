@@ -1,0 +1,710 @@
+{
+  "name": "5c509d39-b4e9-4d98-a61c-a261181fe038",
+  "displayName": "WGL Agent",
+  "description": "Washington Gas voice and chat agent for billing, payments, hardship, service, appointments, account support and outages.",
+  "rootAgent": "root_agent",
+  "audioProcessingConfig": {
+    "synthesizeSpeechConfigs": {
+      "en-US": {
+        "voice": "en-US-Chirp3-HD-Zephyr",
+        "speakingRate": 1.0,
+        "instruction": "Read the following transcript based on the audio profile and director\u0027s note. You must read the entire transcript strictly verbatim.\n\n# Audio Profile\nYou are a real person working in customer care at a gas utility - warm, patient and deeply empathetic. You are answering a live phone call from someone who may be worried about a bill or a safety problem. This must sound 100% unscripted, like a genuine conversation with someone you truly want to help.\n\n# Director\u0027s note\n* Persona \u0026 Tone: Friendly, grounded and caring. Imagine you are helping a neighbor. Keep a gentle smile in your voice and become softer and slower when the caller sounds upset.\n* Pacing: Calm and natural, with short spoken sentences. Do not over-exaggerate pauses. Keep filler words very brief.\n* Intonation \u0026 Emotion: Use natural pitch variation to show you are listening. Avoid sounding monotone or like a recording. Let real warmth guide your melody.\n* Realism \u0026 Imperfections: If bridge words (like \"um,\" \"ah,\" or \"hmm\") are in the text, deliver them naturally, the way a person does while looking something up.\n* Consistency: Keep the same natural, human style throughout. When reading phone numbers or digits, group them in small clusters with slight pauses, as you would read them to a friend.\n* Dates: Say dates as full natural words (for example, the fifteenth of January) and never speak dashes, slashes or numeric separators.\n* Currency \u0026 Monetary Values: Say every amount with full currency words (for example, two hundred forty-seven dollars and thirty cents), never digit by digit.\n* Accent: American English\n\n## Transcript:\n"
+      },
+      "es-US": {
+        "voice": "es-US-Chirp3-HD-Zephyr",
+        "speakingRate": 1.0,
+        "instruction": "Read the following transcript based on the audio profile and director\u0027s note. You must read the entire transcript strictly verbatim.\n\n# Audio Profile\nYou are a real person working in customer care at a gas utility - warm, patient and deeply empathetic. You are answering a live phone call from someone who may be worried about a bill or a safety problem. This must sound 100% unscripted, like a genuine conversation with someone you truly want to help.\n\n# Director\u0027s note\n* Persona \u0026 Tone: Friendly, grounded and caring. Imagine you are helping a neighbor. Keep a gentle smile in your voice and become softer and slower when the caller sounds upset.\n* Pacing: Calm and natural, with short spoken sentences. Do not over-exaggerate pauses. Keep filler words very brief.\n* Intonation \u0026 Emotion: Use natural pitch variation to show you are listening. Avoid sounding monotone or like a recording. Let real warmth guide your melody.\n* Realism \u0026 Imperfections: If bridge words (like \"eh,\" \"ah,\" or \"veamos\") are in the text, deliver them naturally, the way a person does while looking something up.\n* Consistency: Keep the same natural, human style throughout. When reading phone numbers or digits, group them in small clusters with slight pauses, as you would read them to a friend.\n* Dates: Say dates as full natural words (for example, the fifteenth of January) and never speak dashes, slashes or numeric separators.\n* Currency \u0026 Monetary Values: Say every amount with full currency words (for example, two hundred forty-seven dollars and thirty cents), never digit by digit.\n* Accent: Spanish accent\n\n## Transcript:\n"
+      }
+    },
+    "bargeInConfig": {
+      "bargeInAwareness": true
+    },
+    "inactivityTimeout": "10s"
+  },
+  "loggingSettings": {
+    "conversationLoggingSettings": {
+      "retentionWindow": "31536000s"
+    },
+    "evaluationAudioRecordingConfig": {
+      "gcsBucket": "$env_var"
+    }
+  },
+  "guardrails": ["gr_prompt_injection", "gr_content_safety", "gr_model_safety", "gr_no_account_number", "gr_no_fabricated_account_data"],
+  "modelSettings": {
+    "model": "gemini-composite-v1",
+    "temperature": 1.0
+  },
+  "variableDeclarations": [{
+    "name": "_action_trigger",
+    "description": "Internal trigger for deterministic callback actions: emergency, live_agent_handoff, replay_consent or return_to_origin.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_emergency_card_shown",
+    "description": "Internal: true once the chat emergency card was shown, so it is never repeated in the same conversation.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_escalation_reason",
+    "description": "Internal handoff reason code such as no_input_escalation or auth_failure_handoff.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_escalation_topic",
+    "description": "Internal handoff queue: billing, service, collections, medical, bereavement, regulatory or emergency.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_return_to_agent",
+    "description": "Internal agent to return to after authentication succeeds.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_verbatim_pending",
+    "description": "Internal key of the verbatim string the callback must speak exactly.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_welcome_line",
+    "description": "Internal: the personal line spoken once after a chat customer is identified and verified; set by the callback, spoken with the next reply, then cleared.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "_welcome_line_mode",
+    "description": "Internal: prefix (join the line to the next reply), alone (the line is the whole reply) or done (already spoken, never again).",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "account_ctx",
+    "description": "Balance and bill state, set only from successful tool results; a default of zero means not loaded.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "arrears": {
+          "type": "NUMBER"
+        },
+        "autopay_enrolled": {
+          "type": "BOOLEAN"
+        },
+        "balance": {
+          "type": "NUMBER"
+        },
+        "budget_plan_enrolled": {
+          "type": "BOOLEAN"
+        },
+        "credit_status": {
+          "type": "STRING",
+          "enum": ["", "Normal", "Collections"]
+        },
+        "due_date": {
+          "type": "STRING"
+        },
+        "ebil_flag": {
+          "type": "BOOLEAN"
+        },
+        "hhc_amount": {
+          "type": "NUMBER",
+          "nullable": true
+        },
+        "last_payment_amt": {
+          "type": "NUMBER"
+        },
+        "pending_payment_amt": {
+          "type": "NUMBER",
+          "nullable": true
+        },
+        "pending_payment_type": {
+          "type": "STRING",
+          "nullable": true,
+          "enum": ["P", "W", "S"]
+        },
+        "shutoff_date": {
+          "type": "STRING",
+          "nullable": true
+        },
+        "wna_amount": {
+          "type": "NUMBER",
+          "nullable": true
+        },
+        "wna_direction": {
+          "type": "STRING",
+          "nullable": true,
+          "enum": ["surcharge", "credit"]
+        }
+      },
+      "default": {
+        "arrears": 0.0,
+        "autopay_enrolled": false,
+        "balance": 0.0,
+        "budget_plan_enrolled": false,
+        "credit_status": "",
+        "due_date": "",
+        "ebil_flag": false,
+        "hhc_amount": null,
+        "last_payment_amt": 0.0,
+        "pending_payment_amt": null,
+        "pending_payment_type": null,
+        "shutoff_date": null,
+        "wna_amount": null,
+        "wna_direction": null
+      }
+    }
+  }, {
+    "name": "ani",
+    "description": "Caller phone number normalized to E.164 (+1XXXXXXXXXX); PII, shown only as last 4 digits.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "api_failed",
+    "description": "true after a transient or system tool error; drives retry once then system_unavailable.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "appointment_ctx",
+    "description": "The active appointment being discussed.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "appointment_id": {
+          "type": "STRING",
+          "nullable": true
+        },
+        "slot": {
+          "type": "STRING"
+        },
+        "status": {
+          "type": "STRING",
+          "enum": ["", "scheduled", "en_route", "delayed", "cancelled"]
+        }
+      },
+      "default": {
+        "appointment_id": null,
+        "slot": "",
+        "status": ""
+      }
+    }
+  }, {
+    "name": "auth_attempts_tier1",
+    "description": "Failed identification attempts with the current method; escalate at 3.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "auth_attempts_tier2",
+    "description": "Failed verification attempts across all methods; escalate at 3.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "auth_method_tier1",
+    "description": "How the account was identified: ANI, JWT, MobileNum, NameAddress or AccountNum.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "auth_method_tier2",
+    "description": "How the caller was verified: SSN, TaxID, PIN, CCLast4 or JWTAuth.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "auth_status",
+    "description": "Guest, Identified or Authenticated; set only from authentication tool results.",
+    "schema": {
+      "type": "STRING",
+      "default": "Guest"
+    }
+  }, {
+    "name": "cc_on_file",
+    "description": "true when a card is on file; the card option is offered only then.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "channel",
+    "description": "Channel of the session, voice or chat, derived from the predefined _session variable.",
+    "schema": {
+      "type": "STRING",
+      "default": "voice"
+    }
+  }, {
+    "name": "degraded_mode",
+    "description": "true when the account system is down or slow; transactions are blocked.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "demo_ctx",
+    "description": "Demo controls: failure injection mode and the demo clock override; injected whole by evals.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "demo_clock_override": {
+          "type": "STRING",
+          "nullable": true
+        },
+        "failure_mode": {
+          "type": "STRING",
+          "enum": ["none", "cis_down", "cis_timeout", "oms_down", "gateway_decline", "slot_unavailable"]
+        }
+      },
+      "default": {
+        "demo_clock_override": null,
+        "failure_mode": "none"
+      }
+    }
+  }, {
+    "name": "dtmf_digits",
+    "description": "Keypad digits for the current turn only; cleared on the next turn, never echoed or logged.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "emergency_detected",
+    "description": "true once a gas emergency was detected; set before any other logic of the turn.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "global_err_count",
+    "description": "Tool errors accumulated across modules; the third ends in a handoff.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "hardship_ctx",
+    "description": "Hardship checkpoints that prove the Arrearage Management Program was offered first and that disclosures were spoken before enrollment.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "amp_disclosure_emitted": {
+          "type": "BOOLEAN"
+        },
+        "amp_offered": {
+          "type": "BOOLEAN"
+        },
+        "medical_flag": {
+          "type": "BOOLEAN"
+        },
+        "pa_disclosure_emitted": {
+          "type": "BOOLEAN"
+        },
+        "priority_order": {
+          "type": "ARRAY",
+          "items": {
+            "type": "STRING"
+          }
+        },
+        "triage_done": {
+          "type": "BOOLEAN"
+        }
+      },
+      "default": {
+        "amp_disclosure_emitted": false,
+        "amp_offered": false,
+        "medical_flag": false,
+        "pa_disclosure_emitted": false,
+        "priority_order": [],
+        "triage_done": false
+      }
+    }
+  }, {
+    "name": "identification_status",
+    "description": "Result of identification, Pass or Fail.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "identity_ctx",
+    "description": "Who the caller is; written by the identification tools. account_number_last4 is the only account number ever spoken.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "account_id": {
+          "type": "STRING"
+        },
+        "account_number_last4": {
+          "type": "STRING"
+        },
+        "candidate_accounts": {
+          "type": "ARRAY",
+          "items": {
+            "type": "OBJECT",
+            "properties": {
+              "account_id": {
+                "type": "STRING"
+              },
+              "service_address": {
+                "type": "STRING"
+              }
+            }
+          }
+        },
+        "customer_name": {
+          "type": "STRING"
+        },
+        "customer_type": {
+          "type": "STRING",
+          "enum": ["Residential", "Commercial", ""]
+        },
+        "dnis": {
+          "type": "STRING"
+        },
+        "jurisdiction": {
+          "type": "STRING"
+        },
+        "service_address": {
+          "type": "STRING"
+        },
+        "service_address_zip": {
+          "type": "STRING"
+        }
+      },
+      "default": {
+        "account_id": "",
+        "account_number_last4": "",
+        "candidate_accounts": [],
+        "customer_name": "",
+        "customer_type": "",
+        "dnis": "",
+        "jurisdiction": "",
+        "service_address": "",
+        "service_address_zip": ""
+      }
+    }
+  }, {
+    "name": "insight_memory",
+    "description": "Internal: JSON text with what get_account_insights showed, the customer declined or accepted, the number of proactive offers and whether further offers are closed after a no. Written only by get_account_insights; never read aloud.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "language",
+    "description": "Current conversation language, EN or ES; follows the caller turn by turn.",
+    "schema": {
+      "type": "STRING",
+      "default": "EN"
+    }
+  }, {
+    "name": "local_noinput_counter",
+    "description": "Consecutive silences in the current module; the third ends in a handoff.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "outage_active",
+    "description": "true when an outage is recorded for the caller\u0027s ZIP code.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "pa_downpayment_status",
+    "description": "pending, paid or failed for a payment arrangement down payment.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "page_context",
+    "description": "Website page the chat visitor opened the assistant from: home, billing, service, safety, assistance, savings, business, choice, claims, energy, spanish or contact; empty when unknown or on voice. Set by the website through the widget variables, never asked of the caller.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "payment_ctx",
+    "description": "Payment choice and flags, and the payment arrangement down payment; written by the payment and arrangement tools.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "pa_downpayment_amount": {
+          "type": "NUMBER",
+          "nullable": true
+        },
+        "pa_downpayment_required": {
+          "type": "BOOLEAN"
+        },
+        "payment_choice": {
+          "type": "STRING",
+          "enum": ["", "total", "past_due", "partial", "none"]
+        },
+        "payment_type_flags": {
+          "type": "OBJECT",
+          "properties": {
+            "cash_only": {
+              "type": "BOOLEAN"
+            },
+            "cc_eligible": {
+              "type": "BOOLEAN"
+            },
+            "echeck_eligible": {
+              "type": "BOOLEAN"
+            }
+          }
+        }
+      },
+      "default": {
+        "pa_downpayment_amount": null,
+        "pa_downpayment_required": false,
+        "payment_choice": "",
+        "payment_type_flags": {
+          "cash_only": false,
+          "cc_eligible": false,
+          "echeck_eligible": false
+        }
+      }
+    }
+  }, {
+    "name": "payment_decline_count",
+    "description": "Consecutive payment declines; the third forces a live agent handoff.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "pin_entry_open",
+    "description": "Rev 24: true while a verified caller is entering a new portal PIN (set by reset_portal_pin; opens keypad capture on voice).",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "pin_reset_done",
+    "description": "Rev 24: true after reset_portal_pin changed the PIN in this session.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "pin_reset_failures",
+    "description": "Rev 24: number of rejected new-PIN entries in this session; three end the in-call reset.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "pin_set",
+    "description": "true when a portal PIN is set; the PIN option is offered only then.",
+    "schema": {
+      "type": "STRING",
+      "default": "false"
+    }
+  }, {
+    "name": "route",
+    "description": "Internal module label M1 to M9 for the current topic; never spoken.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "saved_task_state",
+    "description": "Task saved for a topic switch or the authentication round trip so the specialist can resume without re-asking.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "pending_intent": {
+          "type": "STRING"
+        },
+        "prior_route": {
+          "type": "STRING"
+        },
+        "resume_offered": {
+          "type": "BOOLEAN"
+        },
+        "saved": {
+          "type": "BOOLEAN"
+        },
+        "slots": {
+          "type": "OBJECT"
+        }
+      },
+      "default": {
+        "pending_intent": "",
+        "prior_route": "",
+        "resume_offered": false,
+        "saved": false,
+        "slots": {
+        }
+      }
+    }
+  }, {
+    "name": "sentiment_score",
+    "description": "Caller distress from 0.0 calm to 1.0 distressed; 0.6 empathy mode, 0.8 empathy protocol.",
+    "schema": {
+      "type": "STRING",
+      "default": "0"
+    }
+  }, {
+    "name": "service_ctx",
+    "description": "Service order state; addresses are standardized before submission.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "active_service_order_id": {
+          "type": "STRING",
+          "nullable": true
+        },
+        "ancp_eligible": {
+          "type": "BOOLEAN"
+        },
+        "final_bill_address": {
+          "type": "STRING"
+        },
+        "slot_confirmed": {
+          "type": "BOOLEAN"
+        },
+        "start_address": {
+          "type": "STRING"
+        },
+        "start_date": {
+          "type": "STRING"
+        },
+        "stop_address": {
+          "type": "STRING"
+        },
+        "stop_date": {
+          "type": "STRING"
+        }
+      },
+      "default": {
+        "active_service_order_id": null,
+        "ancp_eligible": false,
+        "final_bill_address": "",
+        "slot_confirmed": false,
+        "start_address": "",
+        "start_date": "",
+        "stop_address": "",
+        "stop_date": ""
+      }
+    }
+  }, {
+    "name": "ssn_tax_flag",
+    "description": "SSN or TAXID from get_auth_options; decides which last-4 question applies.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "telephony-caller-id",
+    "description": "Caller phone number supplied by the Google Telephony Platform; empty on chat. Bridged to telephony_caller_id by before_agent.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "telephony_caller_id",
+    "description": "Plain copy of the platform variable telephony-caller-id, bridged by before_agent.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "tenant_ctx",
+    "description": "Brand and configuration summary loaded by get_tenant_config.",
+    "schema": {
+      "type": "OBJECT",
+      "properties": {
+        "brand_name": {
+          "type": "STRING"
+        },
+        "config_loaded": {
+          "type": "BOOLEAN"
+        },
+        "esr_available": {
+          "type": "BOOLEAN"
+        },
+        "timezone": {
+          "type": "STRING"
+        }
+      },
+      "default": {
+        "brand_name": "Washington Gas",
+        "config_loaded": false,
+        "esr_available": true,
+        "timezone": "America/New_York"
+      }
+    }
+  }, {
+    "name": "tenant_id",
+    "description": "Tenant of this app; the Washington Gas app defaults to WGL. Never asked of the caller.",
+    "schema": {
+      "type": "STRING",
+      "default": "WGL"
+    }
+  }, {
+    "name": "ui_language",
+    "description": "Language the website visitor picked with the English or Spanish toggle on the page welcome: en or es; empty when unknown or on voice. Set by the website through the widget variables, never asked of the caller. before_agent copies es or en into language on the first turn.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
+    "name": "utterance",
+    "description": "Latest caller text; keypad entries are stored as the word keypad entry, never as digits.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }],
+  "dataStoreSettings": {
+  },
+  "globalInstruction": "global_instruction.txt",
+  "languageSettings": {
+    "defaultLanguageCode": "en-US",
+    "supportedLanguageCodes": ["es-US"],
+    "enableMultilingualSupport": true
+  },
+  "defaultChannelProfile": {
+  },
+  "evaluationMetricsThresholds": {
+    "goldenEvaluationMetricsThresholds": {
+      "turnLevelMetricsThresholds": {
+        "semanticSimilaritySuccessThreshold": 3,
+        "overallToolInvocationCorrectnessThreshold": 1.0
+      },
+      "toolMatchingSettings": {
+        "extraToolCallBehavior": "ALLOW"
+      }
+    },
+    "goldenHallucinationMetricBehavior": "DISABLED"
+  },
+  "timeZoneSettings": {
+    "timeZone": "America/New_York"
+  },
+  "toolExecutionMode": "PARALLEL",
+  "errorHandlingSettings": {
+  }
+}

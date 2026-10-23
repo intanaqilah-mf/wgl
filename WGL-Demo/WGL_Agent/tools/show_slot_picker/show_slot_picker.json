@@ -1,0 +1,57 @@
+{
+  "name": "show_slot_picker",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_slot_picker",
+  "widgetTool": {
+    "name": "show_slot_picker",
+    "description": "Shows up to three appointment slot choices as a picker on chat. Use it after fetch_technician_slots when the caller is on chat. Slots come only from that tool. No spoken pacing is needed. Call shape: name is always cx-show-slot-picker and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-slot-picker (the card element this tool renders).",
+          "enum": ["cx-show-slot-picker"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "service_type": {
+              "type": "STRING",
+              "description": "Appointment type: start, stop, reconnect or meter_test."
+            },
+            "slots": {
+              "type": "ARRAY",
+              "description": "Up to three slots exactly as returned by the tool.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "date": {
+                    "type": "STRING"
+                  },
+                  "slot": {
+                    "type": "STRING"
+                  },
+                  "window": {
+                    "type": "STRING"
+                  }
+                }
+              }
+            }
+          },
+          "required": ["slots"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Choose a time"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Ask in one short sentence which time works best. Do not list the slots: the buttons show them."
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "name": "show_insights_carousel",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_insights_carousel",
+  "widgetTool": {
+    "name": "show_insights_carousel",
+    "description": "Shows one to five swipeable account insight cards on chat, each with a severity badge and one action button. Use it after get_account_insights on chat, for the quick look the customer accepted (up to three insights) and for the single suggestion of a proactive moment (one insight); on voice, speak one insight at a time instead. Pass the insights_card field of get_account_insights as the payload. No spoken pacing is needed. Call shape: name is always cx-show-insights-carousel and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-insights-carousel (the card element this tool renders).",
+          "enum": ["cx-show-insights-carousel"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "insights": {
+              "type": "ARRAY",
+              "description": "One to five insights exactly as returned by get_account_insights.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "action_label": {
+                    "type": "STRING",
+                    "description": "Button text."
+                  },
+                  "action_message": {
+                    "type": "STRING",
+                    "description": "What the customer says when they tap the button."
+                  },
+                  "id": {
+                    "type": "STRING",
+                    "description": "Insight id."
+                  },
+                  "severity": {
+                    "type": "STRING",
+                    "description": "One of info, attention, urgent or saving."
+                  },
+                  "summary": {
+                    "type": "STRING",
+                    "description": "One or two sentences."
+                  },
+                  "title": {
+                    "type": "STRING",
+                    "description": "Short headline."
+                  }
+                }
+              }
+            }
+          },
+          "required": ["insights"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Your account at a glance"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Add one short, warm sentence that says the highlights are above, without repeating their text."
+    }
+  }
+}

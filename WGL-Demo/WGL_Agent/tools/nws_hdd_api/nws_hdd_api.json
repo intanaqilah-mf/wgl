@@ -1,0 +1,10 @@
+{
+  "name": "nws_hdd_api",
+  "pythonFunction": {
+    "name": "nws_hdd_api",
+    "pythonCode": "tools/nws_hdd_api/python_function/python_code.py",
+    "description": "Returns heating degree day figures (how cold the period was) for a ZIP code and billing period,\nfrom stored demo weather data. Before calling this tool, speak a brief conversational pacing\nphrase while it runs.\n\nArgs:\n    zip: Five-digit ZIP code (REQUIRED).\n    start_date: Period start, YYYY-MM-DD.\n    end_date: Period end, YYYY-MM-DD; its year and month select the stored period (REQUIRED).\n\nReturns:\n    dict with ok, hdd_current, hdd_prior_period and hdd_prior_year."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "nws_hdd_api"
+}

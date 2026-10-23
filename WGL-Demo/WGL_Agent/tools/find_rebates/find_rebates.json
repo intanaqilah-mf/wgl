@@ -1,0 +1,10 @@
+{
+  "name": "find_rebates",
+  "pythonFunction": {
+    "name": "find_rebates",
+    "pythonCode": "tools/find_rebates/python_function/python_code.py",
+    "description": "Finds the published Washington Gas energy-efficiency rebates that fit the identified customer\u0027s state\nand home or equipment, with amounts as published on wgsmartsavings.com, the Maryland deadline countdown, and\nthe D.C. pointer to the DC Sustainable Energy Utility. Needs an identified caller. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    topic: Optional words from the caller such as furnace, water heater, thermostat, dryer or fireplace, to include programs that are listed only on request.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, jurisdiction, rebates (id, name, amount, deadline, status_note, action_label,\n    action_message, days_left, detail, source_url), card (the show_rebate_card arguments), deadline_countdown,\n    other_resources, spoken_summary and agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "find_rebates"
+}

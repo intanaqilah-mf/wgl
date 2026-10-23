@@ -1,0 +1,56 @@
+{
+  "name": "show_bill_breakdown_card",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_bill_breakdown_card",
+  "widgetTool": {
+    "name": "show_bill_breakdown_card",
+    "description": "Shows a donut card on chat of what the latest bill is made of (gas supply, delivery and other lines). Use it after get_bill_breakdown when the caller is on chat and asks what their bill includes; on voice, say the same in short sentences. Pass the card field of get_bill_breakdown as is. Values come only from that tool. No spoken pacing is needed. Call shape: name is always cx-show-bill-breakdown-card and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-bill-breakdown-card (the card element this tool renders).",
+          "enum": ["cx-show-bill-breakdown-card"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "items": {
+              "type": "ARRAY",
+              "description": "Bill parts that add up to the total.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "amount": {
+                    "type": "NUMBER",
+                    "description": "Amount in dollars."
+                  },
+                  "label": {
+                    "type": "STRING",
+                    "description": "Name of the part, for example Gas supply."
+                  }
+                }
+              }
+            },
+            "total": {
+              "type": "NUMBER",
+              "description": "Bill total in dollars."
+            }
+          },
+          "required": ["total", "items"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "What is in your bill"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write one short sentence naming the largest part and its amount. Do not read the other items."
+    }
+  }
+}

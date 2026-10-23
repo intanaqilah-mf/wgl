@@ -1,0 +1,46 @@
+{
+  "name": "show_quick_actions",
+  "executionType": "SYNCHRONOUS",
+  "displayName": "show_quick_actions",
+  "widgetTool": {
+    "name": "show_quick_actions",
+    "description": "Shows two to five tappable answer chips on chat: at a choice point (a disambiguation question, the verification method, the payment method, a yes or no confirmation) or as the next best actions after a major answer. Chat only; never on voice. Do not call it for the greeting itself: the opening callback adds its own page chips there. Each option is a short sentence the customer would say, because a tap sends the label back as their next message. No spoken pacing is needed. Call shape: name is always cx-show-quick-actions and all card fields go inside payload.",
+    "widgetType": "CUSTOM",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "name": {
+          "type": "STRING",
+          "description": "Always exactly cx-show-quick-actions (the card element this tool renders).",
+          "enum": ["cx-show-quick-actions"]
+        },
+        "payload": {
+          "type": "OBJECT",
+          "properties": {
+            "options": {
+              "type": "ARRAY",
+              "description": "Two to five short answer labels, written the way the customer would say them.",
+              "items": {
+                "type": "STRING"
+              }
+            },
+            "prompt": {
+              "type": "STRING",
+              "description": "The question being asked."
+            }
+          },
+          "required": ["prompt", "options"],
+          "description": "The card data. Put every card field inside this object."
+        }
+      },
+      "required": ["name", "payload"]
+    },
+    "uiConfig": {
+      "title": "Quick answers"
+    },
+    "textResponseConfig": {
+      "type": "LLM_GENERATED",
+      "textResponseInstruction": "Write one short lead line with the exact facts the customer asked for (each amount, date or fee; when there is more than one, as short bullets that start with - and hold one fact each), then one short question. Never name or list the options in the text: the chips show them. For an identity check write only one short line such as: Quick security check. How would you like to verify? Never use an emoji for a security check, a hardship, a past due balance, a shutoff, a complaint or an error; otherwise at most one emoji at the start. This text is the whole reply, so write no other text."
+    }
+  }
+}

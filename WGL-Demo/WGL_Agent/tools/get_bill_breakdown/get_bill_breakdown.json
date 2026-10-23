@@ -1,0 +1,10 @@
+{
+  "name": "get_bill_breakdown",
+  "pythonFunction": {
+    "name": "get_bill_breakdown",
+    "pythonCode": "tools/get_bill_breakdown/python_function/python_code.py",
+    "description": "Returns what the customer\u0027s latest bill is made of (gas supply, delivery, rider surcharges and adjustments)\nwith amounts that add up to the bill total, shaped for the bill breakdown card. Use period (YYYY-MM) for an\nolder bill. Needs an identified caller. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    period: Optional billing period such as 2026-09; leave empty for the latest bill.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, period, total, items (label, amount), supply_share_pct, delivery_share_pct, card (the\n    show_bill_breakdown_card arguments), spoken_summary and agent_action."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_bill_breakdown"
+}

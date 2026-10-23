@@ -1,0 +1,10 @@
+{
+  "name": "update_language",
+  "pythonFunction": {
+    "name": "update_language",
+    "pythonCode": "tools/update_language/python_function/python_code.py",
+    "description": "Switches the conversation language to English or Spanish when the caller switches. Call it\nbefore replying in the new language. No spoken pacing is needed; this tool is silent and\ninstant.\n\nArgs:\n    new_language: EN, ES, English or Spanish (REQUIRED).\n\nReturns:\n    dict with ok, language and agent_action telling you to continue in that language."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "update_language"
+}

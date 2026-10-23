@@ -1,0 +1,10 @@
+{
+  "name": "process_payment_ach",
+  "pythonFunction": {
+    "name": "process_payment_ach",
+    "pythonCode": "tools/process_payment_ach/python_function/python_code.py",
+    "description": "Takes a one-time bank (ACH / eCheck) payment from the bank details the customer gives. Enforces\nthe payment amount limits and counts consecutive declines. Needs an authenticated caller who\nheard the required ACH disclosures and agreed. The bank details are never repeated back or\nstored. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    amount: Payment amount in dollars the customer confirmed (REQUIRED).\n    routing: Nine-digit bank routing number (REQUIRED).\n    acct: Bank account number (REQUIRED).\n    type: personal or company for tenants that ask; otherwise empty.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number, amount, total_charged, bank_last4, new_balance,\n    expected_posting_date, cancellable_until_posted, shutoff_targeted; on a decline ok is\n    false with declined and declines."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "process_payment_ach"
+}
