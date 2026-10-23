@@ -40,6 +40,23 @@ _NOT_A_PLAIN_PAYMENT = re.compile(r"arrangement|plan|extension|assist|help|hards
 _NO_INPUT_PROMPT = {"EN": "Take your time - I'm still here.", "ES": "Tómese su tiempo, sigo aquí."}
 # Used only when the verbatim lookup itself fails, so a safety or handoff turn is never silent.
 _HANDOFF_FALLBACK = {"EN": "I'm connecting you with a representative now.", "ES": "Lo comunico con un representante ahora."}
+
+# Handoff guard: a model that reaches for user_requested_agent when the caller never asked for a person (or a
+# specialist-only topic) is routed back to the front desk instead of ending the session.
+_PERSON_REQUEST = re.compile(
+    r"\b(representative|rep|agent|human|person|people|someone|somebody|operator|supervisor|manager|advisor|associate|"
+    r"specialist|customer service|talk to|speak (?:to|with)|connect me|transfer me|call me|"
+    r"representante|agente|persona|alguien|operador|gerente|supervisor|hablar con|comun[ií]que)\b",
+    re.IGNORECASE,
+)
+_SPECIALIST_TOPIC = re.compile(
+    r"medical|life support|oxygen|ventilator|dialysis|death|died|passed away|estate|funeral|bereave|bankrupt|"
+    r"name change|change (?:the |my )?name|regulat|commission|attorney general|"
+    r"m[eé]dic|fallec|muri[oó]|quiebra|cambio de nombre|regulador",
+    re.IGNORECASE,
+)
+
+_THIS_AGENT = "billing_payments_agent"  # this copy of the shared callback belongs to this agent
 # PRD s10.5: spoken when SEMCO voice ends authentication after three failed attempts; it never promises a transfer.
 _AUTH_EXIT_LINE = {
     "EN": "I'm sorry, I wasn't able to verify your details, so to protect your account I'm going to end this call now. "
@@ -352,7 +369,31 @@ def _settle_after_emergency(state: dict) -> None:
         state["_escalation_topic"] = ""
 
 
-def _trigger_response(state: dict, trigger: str) -> Optional[LlmResponse]:
+def _caller_asked_for_person(callback_context: CallbackContext) -> bool:
+    """True when one of the caller's last three messages asks for a person or raises a specialist-only topic.
+
+    Fails open (True) when the conversation cannot be read, so a real request is never blocked.
+    """
+    try:
+        texts = []
+        for event in reversed(callback_context.events):
+            if event.is_user():
+                texts.append(" ".join(part.text_or_transcript() or "" for part in event.parts()))
+                if len(texts) == 3:
+                    break
+        joined = " ".join(texts)
+    except Exception as err:
+        print(f"handoff guard could not read the conversation: {err}")
+        return True
+    return bool(_PERSON_REQUEST.search(joined) or _SPECIALIST_TOPIC.search(joined))
+
+
+def _front_desk_response() -> LlmResponse:
+    """Sends the caller back to the front desk (root_agent), silently."""
+    return LlmResponse.from_parts(parts=[Part.from_function_call(name="transfer_to_agent", args={"agent": "root_agent"})])
+
+
+def _trigger_response(state: dict, trigger: str, callback_context: CallbackContext) -> Optional[LlmResponse]:
     """Executes the action the instruction asked for through set_session_state."""
     if trigger == "emergency":
         return _emergency_response(state)
@@ -360,6 +401,11 @@ def _trigger_response(state: dict, trigger: str) -> Optional[LlmResponse]:
         return _consent_response(state)
     if trigger == "live_agent_handoff":
         reason = str(state.get("_escalation_reason", "")) or "user_requested_agent"
+        if reason == "user_requested_agent" and not _caller_asked_for_person(callback_context):
+            print(f"{_THIS_AGENT}: handoff blocked, the caller did not ask for a person; routing to the front desk")
+            state["_escalation_reason"] = ""
+            state["_escalation_topic"] = ""
+            return None if _THIS_AGENT == "root_agent" else _front_desk_response()
         if reason == _AUTH_EXIT_REASON and _tenant(state) == "SEMCO" and str(state.get("channel", "")) == "voice":
             return _auth_exit_response(state)
         queue = str(state.get("_escalation_topic", "")) or "billing"
@@ -371,9 +417,12 @@ def _trigger_response(state: dict, trigger: str) -> Optional[LlmResponse]:
         if line:
             state["_welcome_line"] = line
             state["_welcome_line_mode"] = "prefix" if target else "alone"
-        if target or line:
+        # Always go back, with or without a saved task or a welcome line: an identified caller who asked
+        # something else must reach the front desk, not stay with the agent that only identifies.
+        destination = target or "root_agent"
+        if destination != _THIS_AGENT:
             return LlmResponse.from_parts(
-                parts=[Part.from_function_call(name="transfer_to_agent", args={"agent": target or "root_agent"})]
+                parts=[Part.from_function_call(name="transfer_to_agent", args={"agent": destination})]
             )
     return None
 
@@ -402,7 +451,7 @@ def before_model_callback(callback_context: CallbackContext, llm_request: LlmReq
     trigger = str(state.get("_action_trigger", ""))
     if trigger:
         state["_action_trigger"] = ""
-        response = _trigger_response(state, trigger)
+        response = _trigger_response(state, trigger, callback_context)
         if response is not None:
             return response
 

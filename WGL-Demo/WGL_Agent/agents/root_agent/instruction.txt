@@ -144,7 +144,7 @@
         <step name="Identification_Needed">
             <trigger>The caller needs to be identified before any account help can start and {auth_status} is Guest.</trigger>
             <action>
-                1. Call {@TOOL: set_session_state} with _return_to_agent set to the specialist that fits the request, plus pending_intent describing the request.
+                1. Always call {@TOOL: set_session_state} first, in this same reply, with _return_to_agent set to the specialist that fits the request, plus pending_intent describing the request. Never transfer to auth_agent without saving the request: the caller's question is lost after identification otherwise.
                 2. Transfer to {@AGENT: auth_agent}.
             </action>
         </step>

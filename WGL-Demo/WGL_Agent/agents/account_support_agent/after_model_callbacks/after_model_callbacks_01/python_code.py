@@ -6,10 +6,12 @@ full-account-number safety net is the gr_no_account_number guardrail, not this c
 PLATFORM GLOBALS (not imported): CallbackContext, LlmResponse, Part.
 """
 
+import json
 import re
 from typing import Optional
 
 _FAREWELL = {"EN": "Thank you for contacting us. Take care.", "ES": "Gracias por comunicarse con nosotros. Cuídese mucho."}
+_THIS_AGENT = "account_support_agent"  # this copy of the shared callback belongs to this agent
 _REASK = {"EN": "Sorry, I missed that. Could you say it once more?", "ES": "Disculpe, no lo escuché bien. ¿Podría repetirlo?"}
 
 
@@ -71,6 +73,39 @@ def _prefix_welcome_line(state: dict, parts: list) -> Optional[list]:
     return None
 
 
+def _save_request_before_auth(state: dict, parts: list) -> None:
+    """A transfer to auth_agent with no saved request (the model skipped set_session_state) would lose what the
+    caller asked for; the words they just said are saved so the task resumes once they are identified."""
+    if str(_saved_flag(state)).lower() == "true":
+        return
+    sends_to_auth = any(
+        part.function_call is not None
+        and str(part.function_call.name or "") == "transfer_to_agent"
+        and "auth_agent" in str(part.function_call.args or "")
+        for part in parts
+    )
+    if not sends_to_auth or any(part.has_function_call("set_session_state") for part in parts):
+        return
+    utterance = str(state.get("utterance", "")).strip()
+    if not utterance:
+        return
+    try:
+        tools.set_session_state({"pending_intent": utterance[:200], "_return_to_agent": _THIS_AGENT})
+    except Exception as err:
+        print(f"could not save the request before identification: {err}")
+
+
+def _saved_flag(state: dict) -> str:
+    """The saved flag of saved_task_state (a dict or JSON text); empty when nothing is saved."""
+    value = state.get("saved_task_state")
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return ""
+    return str(value.get("saved", "")) if isinstance(value, dict) else ""
+
+
 def _recover_trigger(state: dict, parts: list) -> None:
     """Sets the trigger for the next model call when state says emergency or handoff but no trigger is set."""
     if state.get("_action_trigger"):
@@ -122,6 +157,7 @@ def _after_model(callback_context: CallbackContext, llm_response: LlmResponse) -
     state = callback_context.state
     parts = list(llm_response.content.parts)
     _recover_trigger(state, parts)
+    _save_request_before_auth(state, parts)
 
     unfilled = [index for index, part in enumerate(parts) if part.text and _UNFILLED_PLACEHOLDER.search(part.text)]
     if unfilled:

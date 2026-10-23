@@ -75,7 +75,20 @@
         </step>
         <step name="Identified_Without_Task">
             <trigger>{identification_status} is Pass, {auth_status} is Identified and {saved_task_state.saved} is false or empty.</trigger>
-            <action>Thank the caller briefly, ask what they need and transfer to {@AGENT: root_agent}; no verification question is needed for information requests.</action>
+            <action>
+                <!-- WHY: The caller who only identified stays with this agent, which has no billing, usage or outage steps; answering here or ending the chat strands them. The front desk routes the request. -->
+                1. Do not answer the caller's question yourself and do not ask what else they need: no verification question is needed for information requests.
+                2. On chat, call {@TOOL: set_session_state} with _action_trigger return_to_origin; the system takes the caller to the front desk silently, where the request is routed.
+                3. On voice, thank the caller briefly and transfer to {@AGENT: root_agent}.
+            </action>
+        </step>
+        <step name="Request_Outside_Identification">
+            <!-- WHY: Handing off for an ordinary question ended live chats the caller never wanted to end. -->
+            <trigger>The caller is identified and asks for anything other than identifying or verifying themselves, such as a bill, bill history, usage, an outage, an appointment or hardship help. Asking for a person, an emergency and the specialist-only topics keep their own steps.</trigger>
+            <action>
+                1. Never hand off for this and never answer it yourself.
+                2. On chat, call {@TOOL: set_session_state} with _action_trigger return_to_origin. On voice, transfer to {@AGENT: root_agent}.
+            </action>
         </step>
         <step name="Offer_Verification_Methods">
             <trigger>{identification_status} is Pass, {auth_status} is Identified and either the saved task changes something (a payment, a payment arrangement or other enrollment, a service order, a profile change, AutoPay, an eBill change, cancelling a pending payment, or scheduling a meter test) or the caller forgot the portal PIN or wants to set a new one.</trigger>
