@@ -17,6 +17,10 @@
         "payload": {
           "type": "OBJECT",
           "properties": {
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: a one-line lead and bullets for the best-fit rebate, the published-on-wgsmartsavings.com note and a markdown link. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "rebates": {
               "type": "ARRAY",
               "description": "Rebates exactly as returned by find_rebates.",
@@ -66,7 +70,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write a one-line lead and bullets for the best-fit rebate: its amount, the apply-by date with the days left when the lookup gave a countdown, and that the amounts and dates are published on wgsmartsavings.com and the program decides eligibility. Never write a raw web address: when a link helps, write a markdown link with a short label such as [See all rebates](address) using the address from the lookup. Do not read every card."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the best fit first with its amount, then every rebate of the card (up to five) with its name, amount and apply-by date, and the days left when the lookup gave a countdown; then say that the amounts and dates are the ones published on wgsmartsavings.com, that the customer may qualify and that the program decides eligibility. Never read a web address. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): a one-line lead and bullets for the best-fit rebate: its amount, the apply-by date with the days left when the lookup gave a countdown, and that the amounts and dates are published on wgsmartsavings.com and the program decides eligibility; when a link helps, a markdown link with a short label such as [See all rebates](address) using the address from the lookup, never a raw address. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

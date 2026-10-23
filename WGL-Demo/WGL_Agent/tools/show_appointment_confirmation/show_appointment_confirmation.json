@@ -32,6 +32,10 @@
               "type": "STRING",
               "description": "Appointment date."
             },
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: one plain sentence with the date, the arrival window and the confirmation number. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "service_type": {
               "type": "STRING",
               "description": "Appointment type."
@@ -52,7 +56,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Say the date, the arrival window and the confirmation number in one plain sentence."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the service type, the date, the arrival window and the address, and every confirmation number (for a move the stop order first and then the start order, each with its date), and that one confirmation text with the appointments is on its way when the step says so. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): one plain sentence with the date, the arrival window and the confirmation number. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

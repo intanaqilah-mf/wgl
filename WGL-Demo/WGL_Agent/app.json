@@ -1,19 +1,17 @@
 {
-  "name": "5c509d39-b4e9-4d98-a61c-a261181fe038",
-  "displayName": "WGL Agent",
+  "name": "28a71ee4-32c6-4f4f-9342-54dcd99cdabf",
+  "displayName": "WGL Agent Sandbox",
   "description": "Washington Gas voice and chat agent for billing, payments, hardship, service, appointments, account support and outages.",
   "rootAgent": "root_agent",
   "audioProcessingConfig": {
     "synthesizeSpeechConfigs": {
       "en-US": {
-        "voice": "en-US-Chirp3-HD-Zephyr",
-        "speakingRate": 1.0,
-        "instruction": "Read the following transcript based on the audio profile and director\u0027s note. You must read the entire transcript strictly verbatim.\n\n# Audio Profile\nYou are a real person working in customer care at a gas utility - warm, patient and deeply empathetic. You are answering a live phone call from someone who may be worried about a bill or a safety problem. This must sound 100% unscripted, like a genuine conversation with someone you truly want to help.\n\n# Director\u0027s note\n* Persona \u0026 Tone: Friendly, grounded and caring. Imagine you are helping a neighbor. Keep a gentle smile in your voice and become softer and slower when the caller sounds upset.\n* Pacing: Calm and natural, with short spoken sentences. Do not over-exaggerate pauses. Keep filler words very brief.\n* Intonation \u0026 Emotion: Use natural pitch variation to show you are listening. Avoid sounding monotone or like a recording. Let real warmth guide your melody.\n* Realism \u0026 Imperfections: If bridge words (like \"um,\" \"ah,\" or \"hmm\") are in the text, deliver them naturally, the way a person does while looking something up.\n* Consistency: Keep the same natural, human style throughout. When reading phone numbers or digits, group them in small clusters with slight pauses, as you would read them to a friend.\n* Dates: Say dates as full natural words (for example, the fifteenth of January) and never speak dashes, slashes or numeric separators.\n* Currency \u0026 Monetary Values: Say every amount with full currency words (for example, two hundred forty-seven dollars and thirty cents), never digit by digit.\n* Accent: American English\n\n## Transcript:\n"
+        "voice": "en-US-Chirp3-HD-Iapetus",
+        "speakingRate": 1.0
       },
       "es-US": {
-        "voice": "es-US-Chirp3-HD-Zephyr",
-        "speakingRate": 1.0,
-        "instruction": "Read the following transcript based on the audio profile and director\u0027s note. You must read the entire transcript strictly verbatim.\n\n# Audio Profile\nYou are a real person working in customer care at a gas utility - warm, patient and deeply empathetic. You are answering a live phone call from someone who may be worried about a bill or a safety problem. This must sound 100% unscripted, like a genuine conversation with someone you truly want to help.\n\n# Director\u0027s note\n* Persona \u0026 Tone: Friendly, grounded and caring. Imagine you are helping a neighbor. Keep a gentle smile in your voice and become softer and slower when the caller sounds upset.\n* Pacing: Calm and natural, with short spoken sentences. Do not over-exaggerate pauses. Keep filler words very brief.\n* Intonation \u0026 Emotion: Use natural pitch variation to show you are listening. Avoid sounding monotone or like a recording. Let real warmth guide your melody.\n* Realism \u0026 Imperfections: If bridge words (like \"eh,\" \"ah,\" or \"veamos\") are in the text, deliver them naturally, the way a person does while looking something up.\n* Consistency: Keep the same natural, human style throughout. When reading phone numbers or digits, group them in small clusters with slight pauses, as you would read them to a friend.\n* Dates: Say dates as full natural words (for example, the fifteenth of January) and never speak dashes, slashes or numeric separators.\n* Currency \u0026 Monetary Values: Say every amount with full currency words (for example, two hundred forty-seven dollars and thirty cents), never digit by digit.\n* Accent: Spanish accent\n\n## Transcript:\n"
+        "voice": "es-US-Chirp3-HD-Iapetus",
+        "speakingRate": 1.0
       }
     },
     "bargeInConfig": {
@@ -22,17 +20,28 @@
     "inactivityTimeout": "10s"
   },
   "loggingSettings": {
+    "redactionConfig": {
+      "enableRedaction": true
+    },
+    "audioRecordingConfig": {
+      "gcsBucket": "$env_var"
+    },
+    "bigqueryExportSettings": {
+      "enabled": true
+    },
+    "cloudLoggingSettings": {
+      "enableCloudLogging": true
+    },
     "conversationLoggingSettings": {
       "retentionWindow": "31536000s"
     },
-    "evaluationAudioRecordingConfig": {
-      "gcsBucket": "$env_var"
+    "metricAnalysisSettings": {
+    },
+    "unredactedBigqueryExportSettings": {
     }
   },
   "guardrails": ["gr_prompt_injection", "gr_content_safety", "gr_model_safety", "gr_no_account_number", "gr_no_fabricated_account_data"],
   "modelSettings": {
-    "model": "gemini-composite-v1",
-    "temperature": 1.0
   },
   "variableDeclarations": [{
     "name": "_action_trigger",

@@ -17,6 +17,10 @@
         "payload": {
           "type": "OBJECT",
           "properties": {
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: one short sentence naming the largest part and its amount. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "items": {
               "type": "ARRAY",
               "description": "Bill parts that add up to the total.",
@@ -50,7 +54,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write one short sentence naming the largest part and its amount. Do not read the other items."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the total of the bill first, then every item of the card with its amount, largest first, in everyday words. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): one short sentence naming the largest part and its amount. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

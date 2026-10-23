@@ -17,6 +17,10 @@
         "payload": {
           "type": "OBJECT",
           "properties": {
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: one short warm sentence that the highlights are above. Put it in the same payload object as insights. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "insights": {
               "type": "ARRAY",
               "description": "One to five insights exactly as returned by get_account_insights.",
@@ -62,7 +66,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Add one short, warm sentence that says the highlights are above, without repeating their text."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say every insight of the card (up to three) in one or two natural sentences from its title and summary, with what the customer can do about it (its action); for the single suggestion of a proactive moment, say it as one short question the customer can decline. Never add an insight that the card does not hold. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): one short warm sentence that says the highlights are above and that you can act on any of them, without repeating their text; put display_text in the same payload object as insights. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

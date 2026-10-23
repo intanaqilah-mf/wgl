@@ -1,8 +1,8 @@
 {
   "app": {
     "loggingSettings": {
-      "evaluationAudioRecordingConfig": {
-        "gcsBucket": "gs://banking-demos-storage"
+      "audioRecordingConfig": {
+        "gcsBucket": "gs://wgl-demo-recordings"
       }
     }
   },

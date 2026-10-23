@@ -17,9 +17,13 @@
         "payload": {
           "type": "OBJECT",
           "properties": {
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply (see the text response rules), shown as the bot bubble above the card: the fact that matters and one short question, in the customer\u0027s language, with dollar amounts and dates in bold markdown (for example Your balance is **$83.32**, due **November 7, 2026**. How would you like to pay?). The card never repeats it. The website shows it instead of the long spoken text."
+            },
             "footnote": {
               "type": "STRING",
-              "description": "Optional one short line under the options, for example the Virginia no-card-fee note."
+              "description": "Optional one short line under the options, for a fact no option row shows. Never repeats a badge or benefit (a No card fee badge is not repeated here) and never repeats display_text."
             },
             "options": {
               "type": "ARRAY",
@@ -62,11 +66,11 @@
             },
             "prompt": {
               "type": "STRING",
-              "description": "Optional one-line hint under the heading, for example Tap one to continue."
+              "description": "Optional one-line hint under the heading, for example Tap one to continue. Never repeats display_text."
             },
             "title": {
               "type": "STRING",
-              "description": "Optional short heading, for example How would you like to pay?"
+              "description": "Optional short heading that names the card, for example Ways to pay. Never a sentence or question that display_text already says."
             }
           },
           "required": ["options"],
@@ -80,7 +84,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write at most two short sentences, about 25 words: the one fact that matters (an amount or a date) and one short question. Never name or describe the options; the card shows them. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Cover the fact that matters first (the balance and the due date, the past due amount, or the program fact the step names), then name every option of the card in order with its benefit and any badge, then any footnote fact (for example that a card has no fee), and end with the one short question the step asks. Say a card by its brand and its last four digits in words only when the option label carries them. Never name an option that the card does not show. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): the short text the step names (the fact that matters and one short question, at most two short sentences of about twenty-five words, with at most one emoji at the start only in a calm moment and never for hardship, past due, a shutoff, a complaint or an error). This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

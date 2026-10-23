@@ -36,6 +36,10 @@
                 "type": "STRING"
               }
             },
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: the headline the table answers and one short question, in the customer\u0027s language. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "highlight_column": {
               "type": "INTEGER",
               "description": "Optional zero-based index of the column to highlight."
@@ -85,7 +89,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write at most two short sentences, about 25 words: the headline the table answers and one short question. Never repeat the table values. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the headline the table answers, then every row for every column (the plan or month, then each of its figures, for example six months at a monthly amount with a down payment or none), any row note (such as the plan that needs energy assistance), the highlighted column and the caption, and end with the one short question the step asks. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): one short sentence with the headline the table answers and one short question, with at most one emoji at the start only in a calm moment and never for hardship, past due, a shutoff, a complaint or an error. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

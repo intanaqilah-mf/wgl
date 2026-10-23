@@ -25,6 +25,10 @@
               "type": "STRING",
               "description": "What the button sends as the customer\u0027s next message."
             },
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply (a warm one-line lead and the question, or the lead and the short bullets the step lists). The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "footnote": {
               "type": "STRING",
               "description": "Optional one short line under the list."
@@ -73,7 +77,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write at most two short sentences, about 25 words: a warm lead and, when a question is needed, one short question. Never repeat the checklist items. Add at most one emoji at the start only in a calm moment, never for hardship, past due, a shutoff, a complaint or an error."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the title, then every item of the card in order with its detail (each amount, notice period, requirement or channel), then the footnote, and end with the one short question the step asks when it asks one. Fees, notices and rules are said exactly as the item states them, in words. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): the short on-screen text the step names (a warm one-line lead and the one question, or the lead and the short bullets the step lists), never longer than the text the step used to show, with at most one emoji at the start only in a calm moment and never for hardship, past due, a shutoff, a complaint or an error. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

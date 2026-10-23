@@ -17,6 +17,10 @@
         "payload": {
           "type": "OBJECT",
           "properties": {
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: one short lead line, for example Usage follows the cold: Feb 2026 peaked at 181.5 therms. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "months": {
               "type": "ARRAY",
               "description": "One entry per month, oldest first.",
@@ -71,7 +75,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Write one short lead line, the shape, with the real figures: Usage follows the cold: [month] peaked at [usage] therms. The facts row of the card shows the heating degree days, this month\u0027s gas used and the peak month, so do not repeat them in a list."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say how the usage followed the cold: the month with the peak usage and its amount, then every fact of the stats row of the card (the heating degree days now against last month, the gas used this month, the peak month with its usage), using the unit. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): the shape Usage follows the cold: [month] peaked at [usage] therms, with the real figures; the facts row of the card shows the rest. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }

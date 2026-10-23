@@ -21,6 +21,10 @@
               "type": "STRING",
               "description": "Claim number such as RB-3001."
             },
+            "display_text": {
+              "type": "STRING",
+              "description": "Optional. The short on-screen text of the reply: one short sentence with the claim number, the current step and the usual timeframe. The website shows it instead of the long spoken text. Dollar amounts and dates are written in bold markdown (**$12.50**, **November 7, 2026**). The card never repeats this text."
+            },
             "note": {
               "type": "STRING",
               "description": "Optional line under the tracker."
@@ -54,7 +58,7 @@
     },
     "textResponseConfig": {
       "type": "LLM_GENERATED",
-      "textResponseInstruction": "Say the claim number and the current step in one short sentence, and mention the usual timeframe from the note."
+      "textResponseInstruction": "Write this text as the full spoken explanation, exactly as a person would say it on a phone call: plain natural spoken sentences, built only from the tool results and nothing invented, that say every fact the card shows once (the card is never repeated afterwards). Say every amount, percentage and date in words (for example forty-one dollars and one cent, the twenty-sixth of October), never digits, dollar signs or symbols, and say a year in words too (twenty twenty-six); a confirmation or claim number is the one exception and is read as returned in short groups. Use no emoji, markdown, bullets, tables, symbols or line breaks, because the voice may read this text aloud. Say the claim number in short groups, every step of the tracker with its state (done, in progress or next), and the usual timeframe from the note. The short on-screen text goes only in display_text of the card payload (always pass it, written in the customer\u0027s language; digits and symbols are allowed there): one short sentence with the claim number and the current step, and the usual timeframe from the note. This text is the whole reply, so write no other text and no separate pacing sentence. When the tool call failed there is no card and the text stays short."
     }
   }
 }
