@@ -259,7 +259,7 @@ def _log_event(event_type: str, detail: dict) -> None:
             "session_id": _session_id(),
             "tenant": _tenant(),
             "event_type": event_type,
-            "detail": detail,
+            "detail": json.dumps(detail, default=str),
         }
         _commit([_set_write("wgl_session_events", _new_id(), fields, "new")])
     except Exception as err:
@@ -352,6 +352,10 @@ def _tier2_ready(method_ok: bool, problem: str) -> dict:
         return denied
     if not _object_var("identity_ctx").get("account_id"):
         return _validation_error("identified account")
+    _, failed_total = _tier2_totals()
+    if failed_total >= _TIER2_LIMIT:
+        _set_var("auth_attempts_tier2", str(failed_total))
+        return _tier2_result("", failed_total)
     if not method_ok:
         return _error(
             "business_rule",
@@ -386,14 +390,27 @@ def _tier2_pass(method: str) -> dict:
     }
 
 
+def _tier2_totals() -> tuple:
+    """Failed validations so far: (count for each method, total across methods). Kept in flat integer fields
+    (tier2_fail_<method>): nested maps written through the Firestore toolset arrive empty, which used to
+    leave this count stuck at one."""
+    session = _get_doc("wgl_sessions", _session_id())
+    counts = {key[len("tier2_fail_"):]: int(value or 0) for key, value in session.items() if key.startswith("tier2_fail_")}
+    return counts, sum(counts.values())
+
+
 def _tier2_fail(method: str) -> dict:
     """Counts a failed validation across all methods and returns only Fail plus attempts_remaining."""
-    session = _get_doc("wgl_sessions", _session_id())
-    failures = dict(session.get("tier2_failures") or {})
-    failures[method] = int(failures.get(method, 0)) + 1
-    total = sum(int(count) for count in failures.values())
+    counts, total = _tier2_totals()
+    counts[method] = counts.get(method, 0) + 1
+    total += 1
     _set_var("auth_attempts_tier2", str(total))
-    _commit([_set_write("wgl_sessions", _session_id(), {"tenant": _tenant(), "tier2_failures": failures})])
+    _commit([_set_write("wgl_sessions", _session_id(), {"tenant": _tenant(), f"tier2_fail_{method}": counts[method]})])
+    return _tier2_result(method, total)
+
+
+def _tier2_result(method: str, total: int) -> dict:
+    """The Fail result for this many failures in all; at the limit it tells the agent to hand off."""
     remaining = max(0, _TIER2_LIMIT - total)
     result = {"ok": True, "result": "Fail", "attempts_remaining": remaining}
     if remaining:

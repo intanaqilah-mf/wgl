@@ -304,11 +304,15 @@ components:
               type: array
               items:
                 type: object
+                additionalProperties: true
         mapValue:
           type: object
           properties:
             fields:
               type: object
+              additionalProperties:
+                type: object
+                additionalProperties: true
     Document:
       type: object
       properties:

@@ -222,7 +222,7 @@ def _log_event(event_type: str, detail: dict) -> None:
             "session_id": _session_id(),
             "tenant": _tenant(),
             "event_type": event_type,
-            "detail": detail,
+            "detail": json.dumps(detail, default=str),
         }
         _commit([_set_write("wgl_session_events", _new_id(), fields, "new")])
     except Exception as err:

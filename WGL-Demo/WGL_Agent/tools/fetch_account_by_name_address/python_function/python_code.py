@@ -271,7 +271,7 @@ def _log_event(event_type: str, detail: dict) -> None:
             "session_id": _session_id(),
             "tenant": _tenant(),
             "event_type": event_type,
-            "detail": detail,
+            "detail": json.dumps(detail, default=str),
         }
         _commit([_set_write("wgl_session_events", _new_id(), fields, "new")])
     except Exception as err:
@@ -426,24 +426,40 @@ def _candidates_result(customers: list, method: str) -> dict:
     }
 
 
+def _tier1_count(method: str) -> int:
+    """Failed identifications so far with this method. Kept in a flat integer field: nested maps written
+    through the Firestore toolset arrive empty, which used to leave this count stuck at one."""
+    return int(_get_doc("wgl_sessions", _session_id()).get(f"tier1_fail_{method}") or 0)
+
+
+def _lockout_error() -> dict:
+    """The result once a method has failed three times: hand off, never look up again."""
+    return _error(
+        "business_rule",
+        "Identification failed three times with this method. Say a warm hand-off line, then call "
+        "set_session_state with _action_trigger live_agent_handoff, _escalation_reason "
+        "identification_failure_handoff and _escalation_topic billing.",
+        found=False,
+        attempts_remaining=0,
+    )
+
+
+def _tier1_lockout(method: str) -> dict:
+    """An error result when this method already failed three times (checked before every lookup), else empty."""
+    if _tier1_count(method) >= _TIER1_LIMIT:
+        _set_var("auth_attempts_tier1", str(_TIER1_LIMIT))
+        return _lockout_error()
+    return {}
+
+
 def _identification_failure(method: str) -> dict:
     """Counts a failed identification per method and escalates at the third failure."""
-    session = _get_doc("wgl_sessions", _session_id())
-    failures = dict(session.get("tier1_failures") or {})
-    failures[method] = int(failures.get(method, 0)) + 1
-    count = failures[method]
+    count = _tier1_count(method) + 1
     _set_var("auth_attempts_tier1", str(count))
     _set_var("identification_status", "Fail")
-    _commit([_set_write("wgl_sessions", _session_id(), {"tenant": _tenant(), "tier1_failures": failures})])
+    _commit([_set_write("wgl_sessions", _session_id(), {"tenant": _tenant(), f"tier1_fail_{method}": count})])
     if count >= _TIER1_LIMIT:
-        return _error(
-            "business_rule",
-            "Identification failed three times with this method. Say a warm hand-off line, then call "
-            "set_session_state with _action_trigger live_agent_handoff, _escalation_reason "
-            "identification_failure_handoff and _escalation_topic billing.",
-            found=False,
-            attempts_remaining=0,
-        )
+        return _lockout_error()
     return {
         "ok": True,
         "found": False,
@@ -462,6 +478,9 @@ def _address_matches(given: str, stored: str) -> bool:
 
 
 def _fetch_account_by_name_address_impl(first_name: str, last_name: str, address: str) -> dict:
+    locked = _tier1_lockout("NameAddress")
+    if locked:
+        return locked
     if not (first_name.strip() and last_name.strip() and address.strip()):
         return _validation_error("first name, last name and service address")
     blocked = _cis_unavailable(_controls())
