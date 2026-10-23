@@ -382,6 +382,28 @@ def _account_patch(customer: dict) -> dict:
 _TIER1_LIMIT = 3
 
 
+# After a typed identification the caller is returned to the front desk by the system, not by the model: the
+# model often asked for a Social Security number instead, even for a question that only reads information.
+_READ_ONLY_INTENT = re.compile(r"balance|bill|history|usage|outage|status|appointment|duplicate", re.IGNORECASE)
+_CHANGE_INTENT = re.compile(
+    r"pay|enrol|cancel|chang|updat|refund|autopay|budget|arrangement|extension|schedul|book|start|stop|move|reset|pin|"
+    r"set ?up|submit|dispute",
+    re.IGNORECASE,
+)
+
+
+def _return_if_read_only() -> None:
+    """Sets the return_to_origin trigger when nothing was saved, or the saved request only reads information.
+
+    A request that changes something (or one that is unclear) is left to the agent, which verifies the caller first.
+    """
+    saved = _object_var("saved_task_state")
+    intent = str(saved.get("pending_intent", "")) if saved.get("saved") else ""
+    if intent and not (_READ_ONLY_INTENT.search(intent) and not _CHANGE_INTENT.search(intent)):
+        return
+    _set_var("_action_trigger", "return_to_origin")
+
+
 def _apply_identity(customer: dict, method: str, level: str = "Identified") -> dict:
     """Loads the matched customer into the session and returns the minimal model-facing summary."""
     merge_ctx("identity_ctx", _identity_patch(customer))
@@ -389,6 +411,7 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
     _set_var("auth_status", level)
     _set_var("auth_method_tier1", method)
     _set_var("identification_status", "Pass")
+    _return_if_read_only()
     _set_var("auth_attempts_tier1", "0")
     _commit([_set_write("wgl_sessions", _session_id(), {
         "tenant": _tenant(),

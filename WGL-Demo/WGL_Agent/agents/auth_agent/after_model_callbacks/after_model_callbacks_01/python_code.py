@@ -177,9 +177,46 @@ def _strip_voice_formatting(state: dict, llm_response: LlmResponse) -> Optional[
     return LlmResponse.from_parts(parts=parts) if changed else None
 
 
+# A reply that carries a <context>...</context> block is the model copying the transcript's own notation for a
+# tool call as text. A set_session_state call written that way is turned into the real call (the follow-up text
+# next to it assumed the call had happened and is dropped); any other such block is removed from the text.
+_LEAKED_CONTEXT = re.compile(r"<context>.*?</context>", re.DOTALL | re.IGNORECASE)
+_LEAKED_CALL = re.compile(r"called tool\s*`?(\w+)`?\s*with parameters:\s*(\{.*\})", re.DOTALL | re.IGNORECASE)
+
+
+def _clean_leaked_context(parts: list) -> Optional[list]:
+    """The parts with leaked context blocks recovered or removed; None when no part holds one."""
+    cleaned, changed = [], False
+    for part in parts:
+        blocks = _LEAKED_CONTEXT.findall(part.text) if part.text and part.function_call is None else []
+        if not blocks:
+            cleaned.append(part)
+            continue
+        changed = True
+        recovered = False
+        for block in blocks:
+            match = _LEAKED_CALL.search(block)
+            if match and match.group(1) == "set_session_state":
+                try:
+                    args = json.loads(match.group(2))
+                except ValueError:
+                    args = None
+                if isinstance(args, dict) and args:
+                    cleaned.append(Part.from_function_call(name="set_session_state", args=args))
+                    recovered = True
+        remaining = "" if recovered else _LEAKED_CONTEXT.sub("", part.text).strip()
+        if remaining:
+            cleaned.append(Part.from_text(text=remaining))
+    return cleaned if changed else None
+
+
 def _after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
     state = callback_context.state
     parts = list(llm_response.content.parts)
+    leak_fixed = _clean_leaked_context(parts)
+    if leak_fixed is not None:
+        print(f"{_THIS_AGENT}: a <context> block in the reply was recovered or removed")
+        return LlmResponse.from_parts(parts=leak_fixed or [Part.from_text(text=_REASK[_language(state)])])
     _recover_trigger(state, parts)
     _save_request_before_auth(state, parts)
 
