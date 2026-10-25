@@ -388,11 +388,6 @@ def _caller_asked_for_person(callback_context: CallbackContext) -> bool:
     return bool(_PERSON_REQUEST.search(joined) or _SPECIALIST_TOPIC.search(joined))
 
 
-def _front_desk_response() -> LlmResponse:
-    """Sends the caller back to the front desk (root_agent), silently."""
-    return LlmResponse.from_parts(parts=[Part.from_function_call(name="transfer_to_agent", args={"agent": "root_agent"})])
-
-
 def _trigger_response(state: dict, trigger: str, callback_context: CallbackContext) -> Optional[LlmResponse]:
     """Executes the action the instruction asked for through set_session_state."""
     if trigger == "emergency":
@@ -402,28 +397,16 @@ def _trigger_response(state: dict, trigger: str, callback_context: CallbackConte
     if trigger == "live_agent_handoff":
         reason = str(state.get("_escalation_reason", "")) or "user_requested_agent"
         if reason == "user_requested_agent" and not _caller_asked_for_person(callback_context):
-            print(f"{_THIS_AGENT}: handoff blocked, the caller did not ask for a person; routing to the front desk")
+            print(f"{_THIS_AGENT}: handoff blocked, the caller did not ask for a person")
             state["_escalation_reason"] = ""
             state["_escalation_topic"] = ""
-            return None if _THIS_AGENT == "root_agent" else _front_desk_response()
+            return None
         if reason == _AUTH_EXIT_REASON and _tenant(state) == "SEMCO" and str(state.get("channel", "")) == "voice":
             return _auth_exit_response(state)
         queue = str(state.get("_escalation_topic", "")) or "billing"
         return _handoff_response(state, reason, queue, "Customer needs a representative.")
-    if trigger == "return_to_origin":
-        target = str(state.get("_return_to_agent", ""))
-        state["_return_to_agent"] = ""
-        line = _welcome_line(state, task_pending=bool(target))
-        if line:
-            state["_welcome_line"] = line
-            state["_welcome_line_mode"] = "prefix" if target else "alone"
-        # Always go back, with or without a saved task or a welcome line: an identified caller who asked
-        # something else must reach the front desk, not stay with the agent that only identifies.
-        destination = target or "root_agent"
-        if destination != _THIS_AGENT:
-            return LlmResponse.from_parts(
-                parts=[Part.from_function_call(name="transfer_to_agent", args={"agent": destination})]
-            )
+    # return_to_origin: a transfer returned from a callback is ignored once a tool has run in the same turn, so the
+    # model does the transfer (the identification and verification results name the agent); nothing to do here.
     return None
 
 

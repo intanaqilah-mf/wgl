@@ -1,4 +1,5 @@
 import json
+import re
 import time
 
 
@@ -253,9 +254,60 @@ def _tenant_config() -> dict:
     return _get_doc("wgl_tenant_config", _tenant())
 
 
+_PERSON_REQUEST = re.compile(
+    r"\b(representative|rep|agent|human|person|people|someone|somebody|operator|supervisor|manager|advisor|associate|"
+    r"specialist|customer service|talk to|speak (?:to|with)|connect me|transfer me|call me|"
+    r"representante|agente|persona|alguien|operador|gerente|supervisor|hablar con|comun[ií]que)\b",
+    re.IGNORECASE,
+)
+_SPECIALIST_TOPIC = re.compile(
+    r"medical|life support|oxygen|ventilator|dialysis|death|died|passed away|estate|funeral|bereave|bankrupt|"
+    r"name change|change (?:the |my )?name|regulat|commission|attorney general|"
+    r"m[eé]dic|fallec|muri[oó]|quiebra|cambio de nombre|regulador",
+    re.IGNORECASE,
+)
+# Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
+_INTENT_ROUTES = (
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+)
+
+
+def _agent_for_intent(intent: str) -> str:
+    """The specialist for this request; root_agent when none fits."""
+    for agent, pattern in _INTENT_ROUTES:
+        if pattern.search(intent):
+            return agent
+    return "root_agent"
+
+
+def _no_handoff_action() -> str:
+    """The refusal text: name the agent that fits the caller's latest message."""
+    target = _agent_for_intent(str(context.state.get("utterance", "") or ""))
+    if target == "root_agent":
+        return ("The caller did not ask for a person, so do not hand off and do not offer one. Keep helping: answer the request "
+                "from the tools. Offer a representative only if they ask.")
+    return ("The caller did not ask for a person, so do not hand off and do not offer one. Your next action must be to call "
+            f"transfer_to_agent with agent {target} now and write nothing else (if you are already {target}, answer the request "
+            "from the tools instead).")
+
+
+def _person_requested() -> bool:
+    """True when the caller's latest message asks for a person or raises a specialist-only topic, or is too short to judge
+    (a bare yes after an offer). Fails open when there is no message."""
+    text = str(context.state.get("utterance", "") or "").strip()
+    if not text or len(text.split()) <= 3:
+        return True
+    return bool(_PERSON_REQUEST.search(text) or _SPECIALIST_TOPIC.search(text))
+
+
 def _execute_live_agent_handoff_impl(reason: str, context_packet: str, queue: str) -> dict:
     if not reason.strip():
         return _validation_error("the handoff reason")
+    if reason.strip() == "user_requested_agent" and not _person_requested():
+        return _error("business_rule", _no_handoff_action())
     queue_name = queue.strip() or _var("_escalation_topic", "billing") or "billing"
     controls = _controls()
     handoff_id = _new_id()

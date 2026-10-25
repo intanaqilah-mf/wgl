@@ -73,11 +73,50 @@ def _prefix_welcome_line(state: dict, parts: list) -> Optional[list]:
     return None
 
 
-def _save_request_before_auth(state: dict, parts: list) -> None:
+_SPECIALISTS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent")
+# Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
+_INTENT_ROUTES = (
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+)
+
+
+def _agent_for_intent(intent: str) -> str:
+    """The specialist for this request; root_agent when none fits."""
+    for agent, pattern in _INTENT_ROUTES:
+        if pattern.search(intent):
+            return agent
+    return "root_agent"
+
+
+
+# A caller who is typing a phone number is answering a question; the request they care about is the message before it.
+_PHONE_ONLY = re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}(?!\d)")
+
+
+def _previous_request(callback_context) -> str:
+    """The caller's latest message before the current one that is more than a phone number (empty when none)."""
+    try:
+        seen_current = False
+        for event in reversed(callback_context.events):
+            if not event.is_user():
+                continue
+            text = " ".join(part.text_or_transcript() or "" for part in event.parts()).strip()
+            if not seen_current:
+                seen_current = True
+                continue
+            if text and not _PHONE_ONLY.search(text):
+                return text
+    except Exception as err:
+        print(f"could not read the earlier request: {err}")
+    return ""
+
+
+def _save_request_before_auth(state: dict, parts: list, callback_context=None) -> None:
     """A transfer to auth_agent with no saved request (the model skipped set_session_state) would lose what the
     caller asked for; the words they just said are saved so the task resumes once they are identified."""
-    if str(_saved_flag(state)).lower() == "true":
-        return
     sends_to_auth = any(
         part.function_call is not None
         and str(part.function_call.name or "") == "transfer_to_agent"
@@ -87,10 +126,15 @@ def _save_request_before_auth(state: dict, parts: list) -> None:
     if not sends_to_auth or any(part.has_function_call("set_session_state") for part in parts):
         return
     utterance = str(state.get("utterance", "")).strip()
+    if callback_context is not None and (not utterance or _PHONE_ONLY.search(utterance)):
+        utterance = _previous_request(callback_context) or utterance
     if not utterance:
         return
+    if str(_saved_flag(state)).lower() == "true" and len(utterance.split()) <= 3:
+        return  # a bare yes or a number while a request is already saved: keep the saved one
     try:
-        tools.set_session_state({"pending_intent": utterance[:200], "_return_to_agent": _THIS_AGENT})
+        target = _agent_for_intent(utterance) if _THIS_AGENT == "root_agent" else _THIS_AGENT
+        tools.set_session_state({"pending_intent": utterance[:200], "_return_to_agent": target})
     except Exception as err:
         print(f"could not save the request before identification: {err}")
 
@@ -194,7 +238,7 @@ def _after_model(callback_context: CallbackContext, llm_response: LlmResponse) -
         print(f"{_THIS_AGENT}: a <context> block in the reply was recovered or removed")
         return LlmResponse.from_parts(parts=leak_fixed or [Part.from_text(text=_REASK[_language(state)])])
     _recover_trigger(state, parts)
-    _save_request_before_auth(state, parts)
+    _save_request_before_auth(state, parts, callback_context)
 
     unfilled = [index for index, part in enumerate(parts) if part.text and _UNFILLED_PLACEHOLDER.search(part.text)]
     if unfilled:

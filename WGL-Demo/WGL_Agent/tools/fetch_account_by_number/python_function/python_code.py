@@ -379,26 +379,51 @@ def _account_patch(customer: dict) -> dict:
 _TIER1_LIMIT = 3
 
 
-# After a typed identification the caller is returned to the front desk by the system, not by the model: the
-# model often asked for a Social Security number instead, even for a question that only reads information.
-_READ_ONLY_INTENT = re.compile(r"balance|bill|history|usage|outage|status|appointment|duplicate", re.IGNORECASE)
+# After identification the MODEL transfers the caller back to the task: a transfer issued from a callback is ignored once
+# a tool has run in the same turn. The result's agent_action names the agent, so the model has no choice to make.
+_READ_ONLY_INTENT = re.compile(r"balance|bill|history|usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|outage|status|appointment|duplicate|rebate", re.IGNORECASE)
 _CHANGE_INTENT = re.compile(
     r"pay|enrol|cancel|chang|updat|refund|autopay|budget|arrangement|extension|schedul|book|start|stop|move|reset|pin|"
     r"set ?up|submit|dispute",
     re.IGNORECASE,
 )
+_SPECIALISTS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent")
+# Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
+_INTENT_ROUTES = (
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+)
 
 
-def _return_if_read_only() -> None:
-    """Sets the return_to_origin trigger when nothing was saved, or the saved request only reads information.
+def _agent_for_intent(intent: str) -> str:
+    """The specialist for this request; root_agent when none fits."""
+    for agent, pattern in _INTENT_ROUTES:
+        if pattern.search(intent):
+            return agent
+    return "root_agent"
 
-    A request that changes something (or one that is unclear) is left to the agent, which verifies the caller first.
-    """
+
+def _return_target(intent: str) -> str:
+    """The agent the caller goes back to: the one saved for the return, else the one that fits the request, else root."""
+    if not intent:
+        return "root_agent"
+    saved_target = _var("_return_to_agent")
+    return saved_target if saved_target in _SPECIALISTS else _agent_for_intent(intent)
+
+
+def _identified_action() -> str:
+    """What the model does next: transfer back for a request that only reads information (or none saved), else verify."""
     saved = _object_var("saved_task_state")
     intent = str(saved.get("pending_intent", "")) if saved.get("saved") else ""
     if intent and not (_READ_ONLY_INTENT.search(intent) and not _CHANGE_INTENT.search(intent)):
-        return
-    _set_var("_action_trigger", "return_to_origin")
+        return ("Identification passed. The saved request changes something or is unclear, so verify the caller next: "
+                "call get_auth_options and follow the verification steps.")
+    target = _return_target(intent)
+    _set_var("_return_to_agent", "")
+    return (f"Identification passed. Do not answer the caller's question yourself, do not ask for verification and do not greet. "
+            f"Call transfer_to_agent with agent {target} now and write nothing else; the agent that takes over continues the request.")
 
 
 def _apply_identity(customer: dict, method: str, level: str = "Identified") -> dict:
@@ -408,7 +433,7 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
     _set_var("auth_status", level)
     _set_var("auth_method_tier1", method)
     _set_var("identification_status", "Pass")
-    _return_if_read_only()
+    action = _identified_action()
     _set_var("auth_attempts_tier1", "0")
     _commit([_set_write("wgl_sessions", _session_id(), {
         "tenant": _tenant(),
@@ -418,7 +443,7 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "auth_method_tier1": method,
     })])
     identity = _identity_patch(customer)
-    return {
+    result = {
         "ok": True,
         "found": True,
         "auth_status": level,
@@ -430,6 +455,8 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "balance": _money(customer.get("balance")),
         "due_date": customer.get("due_date", ""),
     }
+    result["agent_action"] = action
+    return result
 
 
 def _tier1_count(method: str) -> int:

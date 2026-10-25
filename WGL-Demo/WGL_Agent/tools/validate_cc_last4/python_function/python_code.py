@@ -371,6 +371,44 @@ def _card_last4_matches(account_id: str, supplied: str) -> bool:
     return any(str(method.get("last4")) == supplied for method in methods)
 
 
+_SPECIALISTS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent")
+# Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
+_INTENT_ROUTES = (
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+)
+
+
+def _agent_for_intent(intent: str) -> str:
+    """The specialist for this request; root_agent when none fits."""
+    for agent, pattern in _INTENT_ROUTES:
+        if pattern.search(intent):
+            return agent
+    return "root_agent"
+
+
+def _return_target(intent: str) -> str:
+    """The agent the caller goes back to: the one saved for the return, else the one that fits the request, else root."""
+    if not intent:
+        return "root_agent"
+    saved_target = _var("_return_to_agent")
+    return saved_target if saved_target in _SPECIALISTS else _agent_for_intent(intent)
+_PIN_GOAL = re.compile(r"pin|password", re.IGNORECASE)
+
+
+def _after_pass_action() -> str:
+    """What the model does after a passed verification: transfer back to the saved task (a new PIN is set first)."""
+    saved = _object_var("saved_task_state")
+    intent = str(saved.get("pending_intent", "")) if saved.get("saved") else ""
+    target = _return_target(intent)
+    if not _PIN_GOAL.search(intent):
+        _set_var("_return_to_agent", "")
+    return ("Authentication succeeded. Do not ask for verification again. If the caller's goal is a new portal PIN, continue with "
+            f"that; otherwise call transfer_to_agent with agent {target} now and write nothing else, so the saved task continues.")
+
+
 def _tier2_pass(method: str) -> dict:
     """Marks the caller Authenticated from a successful validation (never from the model)."""
     _set_var("auth_status", "Authenticated")
@@ -384,9 +422,7 @@ def _tier2_pass(method: str) -> dict:
         "ok": True,
         "result": "Pass",
         "auth_status": "Authenticated",
-        "agent_action": "Authentication succeeded. Continue the pending task without asking again. If "
-                        "saved_task_state holds a pending intent, call set_session_state with _action_trigger "
-                        "return_to_origin.",
+        "agent_action": _after_pass_action(),
     }
 
 
