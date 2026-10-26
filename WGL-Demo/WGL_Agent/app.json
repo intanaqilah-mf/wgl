@@ -553,6 +553,9 @@
         "resume_offered": {
           "type": "BOOLEAN"
         },
+        "resume_turn": {
+          "type": "NUMBER"
+        },
         "saved": {
           "type": "BOOLEAN"
         },
@@ -564,6 +567,7 @@
         "pending_intent": "",
         "prior_route": "",
         "resume_offered": false,
+        "resume_turn": 0,
         "saved": false,
         "slots": {
         }

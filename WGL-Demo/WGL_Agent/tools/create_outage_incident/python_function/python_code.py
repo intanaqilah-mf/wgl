@@ -1,6 +1,7 @@
 import json
 import re
 import time
+from datetime import datetime, timedelta, timezone
 
 
 def create_outage_incident(account_id: str = "", address: str = "", tenant: str = "") -> dict:
@@ -15,7 +16,9 @@ def create_outage_incident(account_id: str = "", address: str = "", tenant: str 
 
     Returns:
         dict with ok and either incident_number (new report) or existing_outage, incident_id and
-        eta (already known).
+        eta (already known). A repeat report for the same ZIP code within two hours returns the
+        open incident with duplicate true instead of creating another. The ZIP is read from the end
+        of the address (never the house number); a guest report is recorded with account guest.
     """
     try:
         return _finish("create_outage_incident", _create_outage_incident_impl(account_id=account_id, address=address))
@@ -51,6 +54,18 @@ def _object_var(name: str) -> dict:
             return {}
         return parsed if isinstance(parsed, dict) else {}
     return {}
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _to_value(value) -> dict:
@@ -132,6 +147,39 @@ def _check_collection(collection: str) -> None:
         raise ValueError("collection is outside the wgl_ namespace")
 
 
+def _as_list(response) -> list:
+    """Normalizes a toolset response: a list, or a dict that wraps a list under one or more layers."""
+    if isinstance(response, list):
+        return response
+    if isinstance(response, dict):
+        for key in ("response", "result", "results", "output", "items"):
+            inner = response.get(key)
+            if isinstance(inner, (list, dict)):
+                unwrapped = _as_list(inner)
+                if unwrapped:
+                    return unwrapped
+        return [response] if ("document" in response or "fields" in response) else []
+    return []
+
+
+_DEFAULT_QUERY_LIMIT = 50
+
+
+def _field_filter(field: str, value) -> dict:
+    """Builds one EQUAL field filter."""
+    return {"fieldFilter": {"field": {"fieldPath": field}, "op": "EQUAL", "value": _to_value(value)}}
+
+
+def _run_query(collection: str, filters: dict, limit: int = _DEFAULT_QUERY_LIMIT) -> list:
+    """Runs an EQUAL-only query (no orderBy, so no composite index) and returns plain documents."""
+    _check_collection(collection)
+    clauses = [_field_filter(field, value) for field, value in filters.items()]
+    where = clauses[0] if len(clauses) == 1 else {"compositeFilter": {"op": "AND", "filters": clauses}}
+    query = {"from": [{"collectionId": collection}], "where": where, "limit": limit}
+    response = _payload(tools.wgl_firestore_runQuery({"structuredQuery": query}))
+    return [_unwrap_doc(item["document"]) for item in _as_list(response) if isinstance(item, dict) and "document" in item]
+
+
 def _get_doc(collection: str, doc_id: str) -> dict:
     """Reads one document; returns an empty dict when it does not exist."""
     _check_collection(collection)
@@ -167,8 +215,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -269,24 +320,130 @@ def _injected_failure(kind: str, controls: dict) -> str:
     return mode if mode in _FAILURE_KINDS[kind] else ""
 
 
+# An active outage whose estimated time passed more than this many days ago is a stale record, not a live outage.
+_STALE_AFTER_DAYS = 14
+
+
+def _local_now(tz_name: str = "America/New_York") -> datetime:
+    """Current time in the outage's time zone as a naive datetime; demo_ctx.demo_clock_override replaces it when set."""
+    moment = datetime.now(timezone.utc)
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            moment = datetime.fromisoformat(str(override).replace("Z", "+00:00"))
+            if moment.tzinfo is None:
+                return moment
+        except ValueError:
+            print("demo_clock_override is not ISO 8601; the real clock is used")
+            moment = datetime.now(timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        return moment.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        offset = -4 if 3 <= moment.month <= 10 else -5
+        return (moment.astimezone(timezone.utc) + timedelta(hours=offset)).replace(tzinfo=None)
+
+
+def _parse_local(value, tz_name: str = "America/New_York"):
+    """Parses a stored ISO time into a naive datetime in the outage's time zone; None when it is empty or not a time."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed
+    try:
+        from zoneinfo import ZoneInfo
+        return parsed.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        return parsed.replace(tzinfo=None)
+
+
+_ETA_PASSED_ACTION = (
+    "The estimated restoration time for this outage has already passed, so do not state any restoration time or date. "
+    "Say with empathy that crews are still working to restore service, thank the caller for waiting, say there is no need "
+    "to report the outage again, and offer a text message when service is restored (register_restoration_sms)."
+)
+
+
+# One open incident per ZIP code is reused for repeat reports made within this window.
+_DUPLICATE_WINDOW_SECONDS = 2 * 60 * 60
+
+
+_STATE_ZIP = re.compile(
+    r"(?<![A-Za-z0-9])(?:DC|MD|VA|WV|PA|DE|NJ|NY|NC|MI|OH|IN|Dc|Md|Va|dc|md|va)\.?[\s,]+(\d{5})(?:-\d{4})?(?!\d)"
+)
+
+
+_ZIP_AT_END = re.compile(r"(?<![\d-])(\d{5})(?:-\d{4})?\s*$")
+
+
+def _zip_from_address(address: str) -> str:
+    """The ZIP of an address: the five digits at the end, or after the state; never a house number at the start."""
+    text = str(address or "").strip().rstrip(".")
+    ending = _ZIP_AT_END.search(text)
+    if ending:
+        return ending.group(1)
+    after_state = _STATE_ZIP.findall(text)
+    return after_state[-1] if after_state else ""
+
+
 def _create_outage_incident_impl(account_id: str, address: str) -> dict:
-    found = re.search(r"\b(\d{5})\b", address)
-    zip_code = found.group(1) if found else _object_var("identity_ctx").get("service_address_zip", "")
-    if not zip_code or not address.strip():
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    if identified:
+        record_account = _resolve_account_id(account_id)
+        if not record_account:
+            return _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
+    else:
+        record_account = "guest"
+    zip_code = _zip_from_address(address) or str(_object_var("identity_ctx").get("service_address_zip", "") or "")
+    if not zip_code or not address.strip() or zip_code == "00000":
         return _validation_error("the service address with its ZIP code")
     if _injected_failure("oms", _controls()):
         _set_var("api_failed", "true")
         return _error("transient", "The outage system did not respond. Retry once without telling the customer; if it fails again, offer a representative.")
     known = _get_doc("wgl_outages", f"{_tenant()}_{zip_code}")
     if known.get("active"):
-        return {"ok": True, "existing_outage": True, "incident_id": known.get("incident_id", ""), "eta": known.get("eta", "")}
+        zone = str(known.get("eta_timezone") or "America/New_York")
+        eta_time = _parse_local(known.get("eta", ""), zone)
+        passed = eta_time is not None and eta_time < _local_now(zone)
+        stale = passed and _local_now(zone) - eta_time > timedelta(days=_STALE_AFTER_DAYS)
+        if not stale:
+            result = {"ok": True, "existing_outage": True, "incident_id": known.get("incident_id", ""),
+                      "eta": "" if passed else known.get("eta", "")}
+            if passed:
+                result["eta_passed"] = True
+                result["agent_action"] = _ETA_PASSED_ACTION
+            return result
+    now = int(time.time())
+    recent = []
+    for row in _run_query("wgl_outage_incidents", {"tenant": _tenant(), "zip": zip_code, "status": "open"}, 20):
+        reported = int(row.get("reported_at_epoch") or 0)
+        if reported and 0 <= now - reported <= _DUPLICATE_WINDOW_SECONDS:
+            recent.append((reported, row.get("_id", "")))
+    if recent:
+        existing = max(recent)[1]
+        return {
+            "ok": True,
+            "existing_outage": True,
+            "duplicate": True,
+            "incident_id": existing,
+            "incident_number": existing,
+            "eta": "",
+            "agent_action": "An outage report for this area is already open, so no new report was created. Give the caller this "
+                            "incident number, say crews already know about it, and offer the restoration text message.",
+        }
     incident = _reference_number("incidents", "I")
     _commit([_set_write("wgl_outage_incidents", incident, {
-        "account_id": account_id.strip() or _object_var("identity_ctx").get("account_id", ""),
+        "account_id": record_account,
         "tenant": _tenant(),
         "address": address.strip(),
         "zip": zip_code,
         "status": "open",
         "session_id": _session_id(),
+        "reported_at_epoch": now,
     }, "new")])
-    return {"ok": True, "existing_outage": False, "incident_number": incident}
+    return {"ok": True, "existing_outage": False, "duplicate": False, "incident_number": incident}

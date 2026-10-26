@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "fetch_account_by_name_address",
     "pythonCode": "tools/fetch_account_by_name_address/python_function/python_code.py",
-    "description": "Identifies the account from the customer\u0027s first name, last name and service address (Tier 1\nfallback, fuzzy match on the address). Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    first_name: Customer first name (REQUIRED).\n    last_name: Customer last name (REQUIRED).\n    address: Service address as the customer says it, street number and street name at least\n        (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found, count, accounts and, on one match, the Identified account summary;\n    attempts_remaining on a miss."
+    "description": "Identifies the account from the customer\u0027s first name, last name and service address (Tier 1\nfallback, fuzzy match on the address). Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    first_name: Customer first name (REQUIRED).\n    last_name: Customer last name (REQUIRED).\n    address: Service address as the customer says it, street number and street name at least\n        (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found, count, accounts and, on one match, the Identified account summary;\n    attempts_remaining on a miss; account_locked true when the online account is locked (offer the unlock flow)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "fetch_account_by_name_address"

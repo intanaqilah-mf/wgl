@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "register_restoration_sms",
     "pythonCode": "tools/register_restoration_sms/python_function/python_code.py",
-    "description": "Signs the customer up for a text message when service is restored. Needs an identified caller\nwith a mobile number on file. Before calling this tool, speak a brief conversational pacing\nphrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and sent_to_last4."
+    "description": "Signs the customer up for a text message when service is restored. Needs an identified caller\nwith a mobile number on file. Before calling this tool, speak a brief conversational pacing\nphrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and sent_to_last4."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "register_restoration_sms"

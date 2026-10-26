@@ -8,11 +8,12 @@ def fire_utility_payment_notification(account_id: str = "", tenant: str = "") ->
     Before calling this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok and dispatch_reference.
+        dict with ok and dispatch_reference (the same reference again, with duplicate_suppressed true,
+        when the notice was already sent in this session).
     """
     try:
         return _finish("fire_utility_payment_notification", _fire_utility_payment_notification_impl(account_id=account_id))
@@ -129,6 +130,39 @@ def _check_collection(collection: str) -> None:
         raise ValueError("collection is outside the wgl_ namespace")
 
 
+_DEFAULT_QUERY_LIMIT = 50
+
+
+def _as_list(response) -> list:
+    """Normalizes a toolset response: a list, or a dict that wraps a list under one or more layers."""
+    if isinstance(response, list):
+        return response
+    if isinstance(response, dict):
+        for key in ("response", "result", "results", "output", "items"):
+            inner = response.get(key)
+            if isinstance(inner, (list, dict)):
+                unwrapped = _as_list(inner)
+                if unwrapped:
+                    return unwrapped
+        return [response] if ("document" in response or "fields" in response) else []
+    return []
+
+
+def _field_filter(field: str, value) -> dict:
+    """Builds one EQUAL field filter."""
+    return {"fieldFilter": {"field": {"fieldPath": field}, "op": "EQUAL", "value": _to_value(value)}}
+
+
+def _run_query(collection: str, filters: dict, limit: int = _DEFAULT_QUERY_LIMIT) -> list:
+    """Runs an EQUAL-only query (no orderBy, so no composite index) and returns plain documents."""
+    _check_collection(collection)
+    clauses = [_field_filter(field, value) for field, value in filters.items()]
+    where = clauses[0] if len(clauses) == 1 else {"compositeFilter": {"op": "AND", "filters": clauses}}
+    query = {"from": [{"collectionId": collection}], "where": where, "limit": limit}
+    response = _payload(tools.wgl_firestore_runQuery({"structuredQuery": query}))
+    return [_unwrap_doc(item["document"]) for item in _as_list(response) if isinstance(item, dict) and "document" in item]
+
+
 def _get_doc(collection: str, doc_id: str) -> dict:
     """Reads one document; returns an empty dict when it does not exist."""
     _check_collection(collection)
@@ -164,8 +198,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -294,6 +331,17 @@ def _cis_unavailable(controls: dict) -> dict:
     )
 
 
+def _degraded_write_block() -> dict:
+    """Blocks transactional tools while the app is in degraded mode (BR-GU-047)."""
+    if _var("degraded_mode", "false").lower() != "true":
+        return {}
+    return _error(
+        "CIS_DOWN",
+        "Transactions are unavailable right now. Say the account systems are temporarily unavailable "
+        "and offer a representative or a callback shortly.",
+    )
+
+
 # auth_status ladder (PRD s10.1): write tools need Authenticated, account reads need Identified.
 _AUTH_RANK = {"Guest": 0, "Identified": 1, "Authenticated": 2}
 
@@ -305,10 +353,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -323,12 +384,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -336,9 +396,15 @@ def _load_customer(account_id: str, required: str) -> tuple:
 
 
 def _fire_utility_payment_notification_impl(account_id: str) -> dict:
+    blocked = _degraded_write_block()
+    if blocked:
+        return blocked
     customer, error = _load_customer(account_id, "Identified")
     if error:
         return error
+    earlier = _run_query("wgl_notifications", {"account_id": customer["_id"], "type": "utility_payment_notification", "session_id": _session_id()}, 5)
+    if earlier and earlier[0].get("reference"):
+        return {"ok": True, "dispatch_reference": earlier[0]["reference"], "duplicate_suppressed": True}
     reference = _reference_number("confirmations", "N")
     _commit([_set_write("wgl_notifications", _new_id(), {
         "account_id": customer["_id"],
@@ -346,5 +412,6 @@ def _fire_utility_payment_notification_impl(account_id: str) -> dict:
         "type": "utility_payment_notification",
         "channel": "dispatch",
         "reference": reference,
+        "session_id": _session_id(),
     }, "new")])
     return {"ok": True, "dispatch_reference": reference}

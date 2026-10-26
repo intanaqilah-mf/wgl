@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "request_credit_refund",
     "pythonCode": "tools/request_credit_refund/python_function/python_code.py",
-    "description": "Submits a refund request for the credit balance on the account. The refund is paid through the\nbilling system in 10 to 15 business days. Needs an authenticated caller who agreed to the refund\nof the credit amount. Refuses when the account has no credit. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, reference_number, amount and processing_time."
+    "description": "Submits a refund request for the credit balance on the account. The refund is paid through the\nbilling system in 10 to 15 business days. Needs an authenticated caller who agreed to the refund\nof the credit amount. Refuses when the account has no credit. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, reference_number, amount and processing_time."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "request_credit_refund"

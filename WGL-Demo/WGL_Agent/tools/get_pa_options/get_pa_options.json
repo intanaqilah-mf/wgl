@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_pa_options",
     "pythonCode": "tools/get_pa_options/python_function/python_code.py",
-    "description": "Runs the silent hardship triage and returns the payment arrangement plans offered on the account\ntogether with the order in which to present options. Needs an identified caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, options (plan_id, term_months, monthly_amount, down_payment_required,\n    down_payment_amount), priority_order, arrears, shutoff_date, days_to_shutoff and\n    jurisdiction."
+    "description": "Runs the silent hardship triage and returns the payment arrangement plans offered on the account\ntogether with the order in which to present options. Needs an identified caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, options (plan_id, term_months, monthly_amount, down_payment_required,\n    down_payment_amount), priority_order, arrears, shutoff_date, days_to_shutoff and\n    jurisdiction."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_pa_options"

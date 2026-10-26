@@ -43,6 +43,20 @@
             "window": {
               "type": "STRING",
               "description": "Arrival window."
+            },
+            "orders": {
+              "type": "ARRAY",
+              "description": "For a move: one entry per order (the stop order first) from the create_service_order result, so each order keeps its own date and confirmation number. Omit for a single appointment.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "service_type": {"type": "STRING", "description": "start or stop."},
+                  "date": {"type": "STRING", "description": "Appointment date."},
+                  "window": {"type": "STRING", "description": "Arrival window."},
+                  "address": {"type": "STRING", "description": "Service address of this order."},
+                  "confirmation_number": {"type": "STRING", "description": "Confirmation number of this order."}
+                }
+              }
             }
           },
           "required": ["date", "window", "confirmation_numbers"],

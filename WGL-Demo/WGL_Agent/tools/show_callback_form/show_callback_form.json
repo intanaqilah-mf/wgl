@@ -4,7 +4,7 @@
   "displayName": "show_callback_form",
   "widgetTool": {
     "name": "show_callback_form",
-    "description": "Shows a callback request form on chat when the office is closed, to collect the callback number for create_callback_ticket. No spoken pacing is needed. Call shape: name is always cx-show-callback-form and all card fields go inside payload.",
+    "description": "Shows a callback request form on chat when the office is closed, to collect the callback number for create_callback_ticket. The visitor types the number into the form; then call create_callback_ticket with the same reason and that number. No spoken pacing is needed. Call shape: name is always cx-show-callback-form and all card fields go inside payload.",
     "widgetType": "CUSTOM",
     "parameters": {
       "type": "OBJECT",
@@ -23,7 +23,8 @@
             },
             "reason": {
               "type": "STRING",
-              "description": "Why a callback is offered: after_hours or degraded."
+              "description": "Why a callback is offered: after_hours or degraded.",
+              "enum": ["after_hours", "degraded"]
             }
           },
           "required": ["reason"],

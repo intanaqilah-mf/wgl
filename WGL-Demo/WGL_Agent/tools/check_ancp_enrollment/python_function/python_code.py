@@ -180,8 +180,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:

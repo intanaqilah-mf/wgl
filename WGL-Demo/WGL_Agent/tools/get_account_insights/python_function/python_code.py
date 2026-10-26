@@ -15,7 +15,7 @@ def get_account_insights(account_id: str = "", moment: str = "review", customer_
     this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         moment: Why you are calling: review (the customer accepted a look at the account), asked (the customer asked for tips or ideas),
             bill_explained (right after a bill explanation), task_done (the customer's task is finished and they replied),
             customer_said (use customer_said), greeting, status or payment_confirmed (these always return nothing), or
@@ -224,8 +224,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -348,10 +351,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -366,12 +382,9 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -421,9 +434,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 def _parse_date(value):
@@ -725,7 +758,7 @@ def _match_programs(customer: dict, topic: str, today: date) -> list:
         claimable = program.get("claimable", True)
         rows.append({
             "id": program["id"], "short": program["short"], "for": program["for"], "name": program["name"], "amount": program["amount"],
-            "deadline": _pretty_date(program["deadline"]), "status_note": note, "status_spoken": spoken_note,
+            "deadline": _pretty_date(program["deadline"]), "deadline_iso": program["deadline"], "status_note": note, "status_spoken": spoken_note,
             "action_label": "Start claim" if claimable else "Text me the link",
             "action_message": f"Help me claim the {program['short']} rebate" if claimable else "Text me the link for the free energy conservation kit",
             "days_left": days_left, "claimable": claimable, "known_match": bool(known or (asked and matches)), "detail": program["detail"],
@@ -1166,7 +1199,7 @@ def _savings_insights(customer: dict, rows: list, today: date, signals: set = fr
         if urgent:
             summary = f"You may qualify for {top['amount']} back on {top['for']}. The site advises applying by {top['deadline']}, {top['days_left']} days from now."
             spoken = (f"You may qualify for a rebate of {_say_amount_text(top['amount'])} for {top['for']}. "
-                      f"The site advises applying by {_say_date(_MD_SUBMIT_BY)}, which is {_say_count(top['days_left'], 'day')} from now. Would you like to hear more?")
+                      f"The site advises applying by {_say_date(top['deadline_iso'])}, which is {_say_count(top['days_left'], 'day')} from now. Would you like to hear more?")
             title = f"Rebate deadline in {top['days_left']} days"
         else:
             summary = f"You may qualify for {top['amount']} back on {top['for']}."

@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "enrol_budget_plan",
     "pythonCode": "tools/enrol_budget_plan/python_function/python_code.py",
-    "description": "Enrolls the customer in a Budget Plan with a fixed monthly amount. Needs an authenticated caller\nand the customer\u0027s clear agreement to the amount. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    monthly_amount: Monthly installment in dollars the customer agreed to (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number and monthly_amount."
+    "description": "Enrolls the customer in a Budget Plan with a fixed monthly amount. Needs an authenticated caller\nand the customer\u0027s clear agreement to the amount. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    monthly_amount: Monthly installment in dollars the customer agreed to (REQUIRED). It must be\n        a plausible amount: between half and twice the account\u0027s average bill (from the billing\n        history), or between 5 and 2000 when there is no history; otherwise it is refused with the\n        allowed range, which the agent offers instead.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number and monthly_amount."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "enrol_budget_plan"

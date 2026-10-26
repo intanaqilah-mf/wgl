@@ -12,7 +12,8 @@ def check_service_territory(address: str = "", tenant: str = "") -> dict:
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, found and in_territory.
+        dict with ok, found and in_territory. The result is recorded for the session; create_service_order
+        refuses to start service at an address found outside the territory.
     """
     try:
         return _finish("check_service_territory", _check_service_territory_impl(address=address))
@@ -150,8 +151,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -212,6 +216,17 @@ def _in_tenant_region(document: dict) -> bool:
     return document.get("tenant") == _tenant()
 
 
+def _record_check(address: str, found: bool, in_territory: bool) -> None:
+    """Remembers the territory result for this address in the session record, so create_service_order can refuse a start outside the territory."""
+    try:
+        result = "unknown" if not found else ("in" if in_territory else "out")
+        _commit([_set_write("wgl_sessions", _session_id(), {"tenant": _tenant(), "territory_address": _address_key(address), "territory_result": result})])
+    except Exception as err:
+        print(f"territory check not recorded: {err}")
+
+
 def _check_service_territory_impl(address: str) -> dict:
     document = _get_doc("wgl_addresses", _address_key(address))
-    return {"ok": True, "found": bool(document), "in_territory": _in_tenant_region(document) and document.get("territory") == "in"}
+    in_territory = _in_tenant_region(document) and document.get("territory") == "in"
+    _record_check(address, bool(document), in_territory)
+    return {"ok": True, "found": bool(document), "in_territory": in_territory}

@@ -72,7 +72,7 @@
             <action>
                 1. Call {@TOOL: get_tenant_config} to read the hours. Billing and payments follow the front office hours, hardship and collections follow the collections hours, and everything else follows the back office hours.
                 2. When the office is closed, call {@TOOL: get_verbatim_string} with key after_hours_message; the system speaks the exact text.
-                3. After the caller replies, offer a callback. On chat call {@TOOL: show_callback_form}. On voice ask for the callback number and call {@TOOL: create_callback_ticket} with reason after_hours.
+                3. After the caller replies, offer a callback. On chat call {@TOOL: show_callback_form} with payload reason after_hours and prompt What number should we call you back on?; when the visitor types the number, call {@TOOL: create_callback_ticket} with reason after_hours and that number, and give the ticket number. On voice ask for the callback number and call {@TOOL: create_callback_ticket} with reason after_hours.
                 4. Never disconnect the caller. Emergencies are always answered, at any hour.
             </action>
         </step>
@@ -83,7 +83,7 @@
         <step name="Offer_Account_Review">
             <trigger>{auth_status} is Identified or Authenticated, the caller is unsure what they need or has asked whether there is anything to know about the account, and this conversation is still before the first offer of a quick look at the account.</trigger>
             <action>
-                1. Ask once, warmly: Would you like a quick look at your account, or is there something specific I can help with? A bare greeting, a status question or a clear request never gets this offer.
+                1. Ask once, warmly: Would you like a quick look at your account, or is there something specific I can help with? On chat call {@TOOL: show_quick_actions} with that question as the prompt and the options Yes, take a quick look and I need something specific; on voice ask it aloud. A bare greeting, a status question or a clear request never gets this offer.
                 2. Do not mention arrears, a shutoff or hardship before the caller states an intent or says yes. When the caller states a specific need instead, follow Intent_Routing.
             </action>
         </step>
@@ -166,7 +166,7 @@
             <trigger>{degraded_mode} is true.</trigger>
             <action>
                 1. Tell the caller honestly and kindly that the account systems are temporarily unavailable and no account changes are possible right now.
-                2. Offer a representative or a callback. For a representative call {@TOOL: set_session_state} with _action_trigger live_agent_handoff and _escalation_reason system_unavailable. For a callback use {@TOOL: show_callback_form} on chat, or on voice ask for the number and call {@TOOL: create_callback_ticket} with reason degraded.
+                2. Offer a representative or a callback. For a representative call {@TOOL: set_session_state} with _action_trigger live_agent_handoff and _escalation_reason system_unavailable. For a callback use {@TOOL: show_callback_form} on chat with payload reason degraded and prompt What number should we call you back on?, and when the visitor types the number call {@TOOL: create_callback_ticket} with reason degraded and that number and give the ticket number; on voice ask for the number and call {@TOOL: create_callback_ticket} with reason degraded.
                 3. Emergency help, outage status, general questions, payment locations and office hours still work.
             </action>
         </step>
@@ -176,9 +176,16 @@
         <step name="Nothing_More_Needed">
             <trigger>The caller says they need nothing more.</trigger>
             <action>
-                1. On chat call {@TOOL: show_csat_card}; on voice ask one short satisfaction question.
-                2. Call {@TOOL: session_store_write} with a short summary of what was done and any confirmation numbers.
-                3. Thank the caller warmly and call {@TOOL: end_session}.
+                <!-- WHY: A widget call that shares a reply with end_session loses its card (the session ends before the card is delivered), so the card is the whole reply and the session closes after the rating. -->
+                1. On chat call {@TOOL: show_csat_card} with payload prompt How did we do today? and nothing else: the card is the whole reply, and never end the session in this reply.
+                2. On voice ask one short satisfaction question and wait for the answer.
+            </action>
+        </step>
+        <step name="Csat_Rating_Received">
+            <trigger>The caller sends a rating (such as I rate this experience 4 out of 5), answers the satisfaction question, or says goodbye after the satisfaction card or question was shown.</trigger>
+            <action>
+                1. Call {@TOOL: session_store_write} with a short summary of what was done and any confirmation numbers.
+                2. Thank the caller warmly in one short sentence and call {@TOOL: end_session}.
             </action>
         </step>
     </subtask>

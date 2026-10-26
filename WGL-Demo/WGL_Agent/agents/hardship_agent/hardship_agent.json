@@ -3,7 +3,7 @@
   "displayName": "hardship_agent",
   "description": "Helps customers who struggle to pay: payment extension, payment arrangement, the Arrearage Management Program and assistance programs, in the required order.",
   "instruction": "agents/hardship_agent/instruction.txt",
-  "tools": ["end_session", "enrol_amp", "enrol_budget_plan", "enrol_payment_arrangement", "execute_live_agent_handoff", "fire_utility_payment_notification", "get_pa_options", "get_payment_status", "get_tenant_config", "get_verbatim_string", "get_wgl_pay_extension_eligibility", "knowledge_base_search", "process_payment_ach", "process_payment_cc", "send_info_link", "set_session_state", "show_compare_table_card", "show_emergency_card", "show_options_card", "show_quick_actions", "submit_wgl_payment_extension", "update_language", "washgas_website"],
+  "tools": ["end_session", "enrol_amp", "enrol_budget_plan", "enrol_payment_arrangement", "execute_live_agent_handoff", "fire_utility_payment_notification", "get_pa_options", "get_payment_status", "get_tenant_config", "get_verbatim_string", "get_wgl_pay_extension_eligibility", "knowledge_base_search", "process_payment_ach", "process_payment_cc", "send_info_link", "set_session_state", "show_compare_table_card", "show_emergency_card", "show_options_card", "show_payment_receipt_card", "show_quick_actions", "submit_wgl_payment_extension", "update_language", "washgas_website"],
   "beforeModelCallbacks": [{
     "pythonCode": "agents/hardship_agent/before_model_callbacks/before_model_callbacks_01/python_code.py"
   }],

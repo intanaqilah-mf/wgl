@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "send_duplicate_bill",
     "pythonCode": "tools/send_duplicate_bill/python_function/python_code.py",
-    "description": "Sends a duplicate of a bill by email or by mail. With no delivery given it uses the eBill\ndefault: email when enrolled, mail otherwise. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    period: Billing period key such as 2026-10; empty means the latest bill.\n    delivery: email or mail; empty uses the default.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, delivery, period and destination_hint (masked email or mailing address on\n    file)."
+    "description": "Sends a duplicate of a bill by email or by mail. With no delivery given it uses the eBill\ndefault: email when enrolled, mail otherwise. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    period: Billing period key such as 2026-10; empty means the latest bill.\n    delivery: email or mail; empty uses the default.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, delivery, period and destination_hint (masked email or mailing address on\n    file). Refuses email delivery when there is no email address on file (offer mail instead)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "send_duplicate_bill"

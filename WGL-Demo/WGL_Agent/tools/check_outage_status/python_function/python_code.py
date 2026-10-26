@@ -1,6 +1,7 @@
 import json
 import re
 import time
+from datetime import datetime, timedelta, timezone
 
 
 def check_outage_status(zip: str = "", tenant: str = "") -> dict:
@@ -13,8 +14,9 @@ def check_outage_status(zip: str = "", tenant: str = "") -> dict:
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, outage_active, incident_id, eta and planned_maintenance (start and end);
-        sets the outage_active variable.
+        dict with ok, outage_active, incident_id, eta, eta_passed and planned_maintenance (start and end);
+        sets the outage_active variable. When eta_passed is true the estimate is gone: follow agent_action
+        and never state a restoration time. An old unclosed record is reported as no outage.
     """
     try:
         return _finish("check_outage_status", _check_outage_status_impl(zip=zip))
@@ -171,8 +173,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -256,6 +261,55 @@ def _injected_failure(kind: str, controls: dict) -> str:
     return mode if mode in _FAILURE_KINDS[kind] else ""
 
 
+# An active outage whose estimated time passed more than this many days ago is a stale record, not a live outage.
+_STALE_AFTER_DAYS = 14
+
+
+def _local_now(tz_name: str = "America/New_York") -> datetime:
+    """Current time in the outage's time zone as a naive datetime; demo_ctx.demo_clock_override replaces it when set."""
+    moment = datetime.now(timezone.utc)
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            moment = datetime.fromisoformat(str(override).replace("Z", "+00:00"))
+            if moment.tzinfo is None:
+                return moment
+        except ValueError:
+            print("demo_clock_override is not ISO 8601; the real clock is used")
+            moment = datetime.now(timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        return moment.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        offset = -4 if 3 <= moment.month <= 10 else -5
+        return (moment.astimezone(timezone.utc) + timedelta(hours=offset)).replace(tzinfo=None)
+
+
+def _parse_local(value, tz_name: str = "America/New_York"):
+    """Parses a stored ISO time into a naive datetime in the outage's time zone; None when it is empty or not a time."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed
+    try:
+        from zoneinfo import ZoneInfo
+        return parsed.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        return parsed.replace(tzinfo=None)
+
+
+_ETA_PASSED_ACTION = (
+    "The estimated restoration time for this outage has already passed, so do not state any restoration time or date. "
+    "Say with empathy that crews are still working to restore service, thank the caller for waiting, say there is no need "
+    "to report the outage again, and offer a text message when service is restored (register_restoration_sms)."
+)
+
+
 def _check_outage_status_impl(zip: str) -> dict:
     digits = _digits(zip)[:5]
     if len(digits) != 5:
@@ -268,12 +322,39 @@ def _check_outage_status_impl(zip: str) -> dict:
             "cannot see outage details right now and offer to take an outage report or connect a representative.",
         )
     outage = _get_doc("wgl_outages", f"{_tenant()}_{digits}")
+    zone = str(outage.get("eta_timezone") or "America/New_York")
+    now = _local_now(zone)
     active = bool(outage.get("active"))
+    incident_id, eta = outage.get("incident_id", ""), outage.get("eta", "")
+    eta_passed = stale = False
+    if active:
+        eta_time = _parse_local(eta, zone)
+        if eta_time is not None and eta_time < now:
+            if now - eta_time > timedelta(days=_STALE_AFTER_DAYS):
+                # An old record that was never closed: it is not a live outage.
+                active, stale, incident_id = False, True, ""
+            else:
+                eta_passed = True
+            eta = ""
+    maintenance = outage.get("planned_maintenance") or {}
+    maintenance_ended = False
+    if maintenance:
+        end = _parse_local(maintenance.get("end"), zone)
+        if end is not None and end < now:
+            maintenance, maintenance_ended = {}, True
     _set_var("outage_active", "true" if active else "false")
-    return {
+    result = {
         "ok": True,
         "outage_active": active,
-        "incident_id": outage.get("incident_id", ""),
-        "eta": outage.get("eta", ""),
-        "planned_maintenance": outage.get("planned_maintenance") or {},
+        "incident_id": incident_id,
+        "eta": eta,
+        "eta_passed": eta_passed,
+        "planned_maintenance": maintenance,
     }
+    if eta_passed:
+        result["agent_action"] = _ETA_PASSED_ACTION
+    if stale:
+        result["stale_incident_ignored"] = True
+    if maintenance_ended:
+        result["planned_maintenance_ended"] = True
+    return result

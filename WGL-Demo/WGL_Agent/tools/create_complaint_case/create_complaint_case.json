@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "create_complaint_case",
     "pythonCode": "tools/create_complaint_case/python_function/python_code.py",
-    "description": "Creates a complaint case after an attempt to resolve the issue first, and returns the case\nnumber and the timeline to share. Needs an identified caller. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    type: Complaint category such as billing, service or other (REQUIRED).\n    description: What the customer said, in plain words (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, case_number and timeline (from the brand configuration; empty when none is\n    configured)."
+    "description": "Creates a complaint case after an attempt to resolve the issue first, and returns the case\nnumber and the timeline to share. Needs an identified caller. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    type: Complaint category such as billing, service or other (REQUIRED).\n    description: What the customer said, in plain words (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, case_number and timeline (from the brand configuration; empty when none is\n    configured)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "create_complaint_case"

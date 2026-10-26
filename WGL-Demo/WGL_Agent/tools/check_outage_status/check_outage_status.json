@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "check_outage_status",
     "pythonCode": "tools/check_outage_status/python_function/python_code.py",
-    "description": "Checks whether a gas outage or planned maintenance is recorded for a ZIP code. Works for guests,\nidentified and authenticated callers. Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    zip: Five-digit ZIP code of the service address (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, outage_active, incident_id, eta and planned_maintenance (start and end);\n    sets the outage_active variable."
+    "description": "Checks whether a gas outage or planned maintenance is recorded for a ZIP code. Works for guests,\nidentified and authenticated callers. Before calling this tool, speak a brief conversational\npacing phrase while it runs.\n\nArgs:\n    zip: Five-digit ZIP code of the service address (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, outage_active, incident_id, eta, eta_passed and planned_maintenance (start and end);\n    sets the outage_active variable. When eta_passed is true the estimate is gone: follow agent_action\n    and never state a restoration time. An old unclosed record is reported as no outage."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "check_outage_status"

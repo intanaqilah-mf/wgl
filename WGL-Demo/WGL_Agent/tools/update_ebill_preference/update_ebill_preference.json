@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "update_ebill_preference",
     "pythonCode": "tools/update_ebill_preference/python_function/python_code.py",
-    "description": "Turns paperless eBill on or off for the account. Needs an authenticated caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    enrolled: True to turn eBill on, false to turn it off (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and ebil_flag."
+    "description": "Turns paperless eBill on or off for the account. Needs an authenticated caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    enrolled: True to turn eBill on, false to turn it off (REQUIRED; there is no default: when it is missing or\n        unclear the tool refuses and changes nothing).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and ebil_flag."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "update_ebill_preference"

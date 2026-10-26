@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "validate_portal_pin",
     "pythonCode": "tools/validate_portal_pin/python_function/python_code.py",
-    "description": "Checks the customer\u0027s portal PIN against the account (only when get_auth_options returned\npin_set true). The digits are never repeated back or logged. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    pin_dtmf: The PIN digits, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
+    "description": "Checks the customer\u0027s portal PIN against the account (only when get_auth_options returned\npin_set true). The digits are never repeated back or logged. Before calling this tool, speak a\nbrief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    pin_dtmf: The PIN digits, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "validate_portal_pin"

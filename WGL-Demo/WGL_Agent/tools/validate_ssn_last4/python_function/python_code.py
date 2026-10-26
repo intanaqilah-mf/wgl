@@ -10,7 +10,7 @@ def validate_ssn_last4(account_id: str = "", ssn_last4: str = "", tenant: str = 
     Before calling this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         ssn_last4: The four digits, spoken, keyed or typed (REQUIRED).
         tenant: Injected by the system from tenant_id; leave empty.
 
@@ -173,8 +173,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -301,8 +304,9 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
 
@@ -344,10 +348,10 @@ def _secret_matches(secrets: dict, field: str, supplied: str) -> bool:
 _SPECIALISTS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent")
 # Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
 _INTENT_ROUTES = (
-    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
-    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
-    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
-    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off (?:notice|date|warning)|shutoff|disconnect(?:ion)? (?:notice|date|warning)|(?:going|about) to (?:be )?(?:shut|cut|disconnect)|cut off|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|\bmov(?:e|ing)\b|reconnect|shut ?off (?:my|the) gas|turn off (?:my|the) gas|disconnect (?:my|the) (?:gas|service)|consumo|cita|medidor", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement|factura|saldo|pagar|pago", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint|apag[o\u00f3]n|interrupci[o\u00f3]n", re.IGNORECASE)),
 )
 
 
@@ -376,7 +380,8 @@ def _after_pass_action() -> str:
     if not _PIN_GOAL.search(intent):
         _set_var("_return_to_agent", "")
     return ("Authentication succeeded. Do not ask for verification again. If the caller's goal is a new portal PIN, continue with "
-            f"that; otherwise call transfer_to_agent with agent {target} now and write nothing else, so the saved task continues.")
+            f"that; otherwise your next output must be only the function call transfer_to_agent with agent {target}: call transfer_to_agent with agent {target} now, "
+            "with no text at all (do not thank, do not say you are transferring), so the saved task continues.")
 
 
 def _tier2_pass(method: str) -> dict:
@@ -433,6 +438,18 @@ def _tier2_result(method: str, total: int) -> dict:
     return result
 
 
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
+
+
 def _validate_secret(account_id: str, method: str, field: str, supplied: str, min_digits: int, max_digits: int) -> dict:
     """Shared body of validate_ssn_last4, validate_taxid_last4 and validate_portal_pin."""
     digits = _digits(supplied)
@@ -442,9 +459,9 @@ def _validate_secret(account_id: str, method: str, field: str, supplied: str, mi
     blocked = _cis_unavailable(controls)
     if blocked:
         return blocked
-    resolved = account_id.strip() or _object_var("identity_ctx").get("account_id", "")
-    if resolved != _object_var("identity_ctx").get("account_id", ""):
-        return _rule_error("only the identified account can be verified", "continue with that account")
+    resolved = _resolve_account_id(account_id)
+    if not resolved:
+        return _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     secrets = _get_doc("wgl_auth_secrets", resolved)
     if secrets and _secret_matches(secrets, field, digits):
         return _tier2_pass(method)

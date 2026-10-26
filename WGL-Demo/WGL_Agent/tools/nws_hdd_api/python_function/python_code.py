@@ -157,8 +157,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -214,11 +217,33 @@ def _finish(tool_name: str, result: dict) -> dict:
     return result
 
 
+def _period_key(value: str) -> str:
+    """The YYYY-MM key of a date written as YYYY-MM-DD, YYYY-MM, M/D/YYYY or like Oct 31, 2026; '' when it is not a date."""
+    text = str(value or "").strip()
+    found = re.match(r"^(\d{4})-(\d{1,2})(?:-\d{1,2})?", text)
+    if found:
+        year, month = int(found.group(1)), int(found.group(2))
+    else:
+        found = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})", text)
+        if found:
+            month, year = int(found.group(1)), int(found.group(3))
+        else:
+            names = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+            found = re.match(r"^([A-Za-z]{3})[A-Za-z]*\.?\s+\d{1,2},?\s+(\d{4})", text)
+            if not found or found.group(1).lower() not in names:
+                return ""
+            month, year = names.index(found.group(1).lower()) + 1, int(found.group(2))
+    return f"{year:04d}-{month:02d}" if 1 <= month <= 12 and 1900 <= year <= 2200 else ""
+
+
 def _nws_hdd_api_impl(zip: str, end_date: str) -> dict:
     digits = _digits(zip)[:5]
-    if len(digits) != 5 or len(end_date.strip()) < 7:
+    if len(digits) != 5 or len(str(end_date or "").strip()) < 7:
         return _validation_error("a five-digit ZIP code and the period end date")
-    document = _get_doc("wgl_weather_hdd", f"{digits}_{end_date.strip()[:7]}")
+    period = _period_key(end_date)
+    if not period:
+        return _validation_error("the period end date as YYYY-MM-DD")
+    document = _get_doc("wgl_weather_hdd", f"{digits}_{period}")
     if not document:
         return _error("business_rule", "No weather data is stored for that ZIP code and period. Explain the bill without weather figures.")
     return {

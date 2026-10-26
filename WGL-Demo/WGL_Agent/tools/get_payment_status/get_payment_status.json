@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_payment_status",
     "pythonCode": "tools/get_payment_status/python_function/python_code.py",
-    "description": "Says whether a payment is pending on the account, its type, amount and expected posting date.\nFor an authenticated caller it also lists the payment methods on file (type, brand, last 4\ndigits and the card-on-file token) that process_payment_cc needs. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, pending_payment_type (P, W or S, or null), amount, expected_posting_date,\n    cancel_eligible, balance, credit_balance and, only when authenticated, payment_methods."
+    "description": "Says whether a payment is pending on the account, its type, amount and expected posting date.\nFor an authenticated caller it also lists the payment methods on file (type, brand, last 4\ndigits and the card-on-file token) that process_payment_cc needs. Before calling this tool,\nspeak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, pending_payment_type (P, W or S, or null), amount, expected_posting_date,\n    cancel_eligible, balance, credit_balance and, only when authenticated, payment_methods."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_payment_status"

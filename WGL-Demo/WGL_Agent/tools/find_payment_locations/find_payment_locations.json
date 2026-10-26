@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "find_payment_locations",
     "pythonCode": "tools/find_payment_locations/python_function/python_code.py",
-    "description": "Finds up to five places where the customer can pay in person, such as offices and retail\npartners, near a ZIP code or city. Works for guests. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    tenant: Injected by the system from tenant_id; leave empty.\n    zip_or_city: ZIP code or city name the customer gives (REQUIRED).\n\nReturns:\n    dict with ok, matched_area and locations (name, address, hours, cash_accepted, type);\n    matched_area is false when the nearest list is returned instead of an exact match."
+    "description": "Finds up to five places where the customer can pay in person, such as offices and retail\npartners, near a ZIP code or city. Works for guests. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    tenant: Injected by the system from tenant_id; leave empty.\n    zip_or_city: ZIP code or city name the customer gives (REQUIRED).\n\nReturns:\n    dict with ok, matched_area and locations (name, address, hours, cash_accepted, type);\n    matched_area is false when the nearest list is returned instead of an exact match. A ZIP+4\n    matches its ZIP and \"City, ST\" matches the city."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "find_payment_locations"

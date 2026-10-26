@@ -10,13 +10,13 @@ def update_profile_field(account_id: str = "", field: str = "", value: str = "",
     it runs.
 
     Args:
-        account_id: Account id of the authenticated account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         field: phone, email or mailing_address (REQUIRED).
         value: The new value (REQUIRED); a mailing address should be validated first.
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, field, previous_value and new_value (phone shown as last 4 digits only).
+        dict with ok, field, previous_value and new_value (phone shown as last 4 digits only, email masked).
     """
     try:
         return _finish("update_profile_field", _update_profile_field_impl(account_id=account_id, field=field, value=value))
@@ -59,14 +59,27 @@ def _digits(text: str) -> str:
     return re.sub(r"\D", "", str(text))
 
 
+# Toll-free area codes can never be a customer's own number (800 and 888 numbers are test numbers in demos).
+_TOLL_FREE_AREA_CODES = ("800", "833", "844", "855", "866", "877", "888")
+
+
 def _e164(raw: str) -> str:
-    """Normalizes a phone number to +1XXXXXXXXXX; returns an empty string when it is not a US number."""
+    """Normalizes a phone number to +1XXXXXXXXXX; returns an empty string when it is not a valid NANP number.
+
+    Valid means ten digits (or eleven with a leading 1) where the area code and the exchange start with 2 to 9, neither is an
+    N11 service code, the area code is not toll free and the number is not one repeated digit.
+    """
     digits = _digits(raw)
-    if len(digits) == 10:
-        return f"+1{digits}"
     if len(digits) == 11 and digits.startswith("1"):
-        return f"+{digits}"
-    return ""
+        digits = digits[1:]
+    if len(digits) != 10:
+        return ""
+    area, exchange = digits[:3], digits[3:6]
+    if area[0] not in "23456789" or exchange[0] not in "23456789":
+        return ""
+    if area[1:] == "11" or exchange[1:] == "11" or area in _TOLL_FREE_AREA_CODES or len(set(digits)) == 1:
+        return ""
+    return f"+1{digits}"
 
 
 def _to_value(value) -> dict:
@@ -183,8 +196,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -318,10 +334,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -336,12 +365,9 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -364,7 +390,10 @@ def _clean_profile_value(field: str, value: str) -> str:
 
 
 def _shown(field: str, text: str) -> str:
-    """Phone numbers are shown as the last 4 digits only."""
+    """Phone numbers are shown as the last 4 digits only and an email address is masked (first letter and domain)."""
+    if field == "email":
+        local, _, domain = str(text).partition("@")
+        return f"{local[:1]}***@{domain}" if domain else ""
     return text[-4:] if field == "phone" else text
 
 
@@ -383,6 +412,18 @@ def _phone_changed_text() -> str:
     return "Washington Gas: the phone number on your account was changed. If this was not you, call us right away."
 
 
+def _locked_block(customer: dict) -> dict:
+    """Refuses a change while the online account is locked: the caller must unlock it first (unlock_account)."""
+    if not customer.get("account_locked"):
+        return {}
+    return _error(
+        "business_rule",
+        "The online account is locked, so this change is refused until it is unlocked. Offer to unlock it now: the caller must be "
+        "verified, then call unlock_account, then repeat the change.",
+        account_locked=True,
+    )
+
+
 def _update_profile_field_impl(account_id: str, field: str, value: str) -> dict:
     if field == "name":
         return _error("business_rule", "A name change always goes to a representative. Offer a warm hand-off with set_session_state; do not change it yourself.")
@@ -394,6 +435,9 @@ def _update_profile_field_impl(account_id: str, field: str, value: str) -> dict:
     customer, error = _load_customer(account_id, "Authenticated")
     if error:
         return error
+    locked = _locked_block(customer)
+    if locked:
+        return locked
     cleaned = _clean_profile_value(field, value)
     if not cleaned:
         return _validation_error(f"a valid {field.replace('_', ' ')}")

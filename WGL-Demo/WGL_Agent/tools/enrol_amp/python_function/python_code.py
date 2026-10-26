@@ -8,11 +8,12 @@ def enrol_amp(account_id: str = "", tenant: str = "") -> dict:
     agreed. Before calling this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the authenticated account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok and confirmation_number.
+        dict with ok and confirmation_number (the same number again, with duplicate_suppressed true,
+        when the customer is already enrolled).
     """
     try:
         return _finish("enrol_amp", _enrol_amp_impl(account_id=account_id))
@@ -164,8 +165,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -316,10 +320,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -334,12 +351,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -353,6 +369,12 @@ def _enrol_amp_impl(account_id: str) -> dict:
     customer, error = _load_customer(account_id, "Authenticated")
     if error:
         return error
+    if customer.get("amp_enrolled"):
+        earlier = str(customer.get("amp_confirmation_number") or "")
+        if earlier:
+            return {"ok": True, "confirmation_number": earlier, "duplicate_suppressed": True,
+                    "agent_action": "The customer is already enrolled in the Arrearage Management Program; give the same confirmation number again and never say they were enrolled twice."}
+        return _rule_error("the customer is already enrolled in the Arrearage Management Program", "look at what else would help")
     if customer.get("jurisdiction") != "DC" or float(customer.get("arrears") or 0) <= 0:
         return _rule_error("The Arrearage Management Program is offered only to DC customers with arrears", "look at a payment arrangement or assistance programs")
     if not customer.get("doee_approved"):
@@ -366,5 +388,5 @@ def _enrol_amp_impl(account_id: str) -> dict:
             "amp_enrolment_disclosure, let the system speak it, wait for the customer's agreement, then enroll.",
         )
     reference = _reference_number("confirmations")
-    _commit([_set_write("wgl_customers", customer["_id"], {"amp_enrolled": True}, "must")])
+    _commit([_set_write("wgl_customers", customer["_id"], {"amp_enrolled": True, "amp_confirmation_number": reference}, "must")])
     return {"ok": True, "confirmation_number": reference}

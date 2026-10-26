@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_rebate_claim_status",
     "pythonCode": "tools/get_rebate_claim_status/python_function/python_code.py",
-    "description": "Returns the status of the customer\u0027s rebate claims (a mock tracker: Received, Reviewing, Approved, Paid),\none claim by its number or the most recent first. Needs an identified caller. Before calling this tool, speak\na brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    claim_id: Claim number such as RB-3001; leave empty for all claims of the account.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, claims (claim_id, program_name, amount, status, steps, submitted_on, note), card (the\n    show_claim_status_card arguments of the first claim), spoken_summary and agent_action."
+    "description": "Returns the status of the customer\u0027s rebate claims (a mock tracker: Received, Reviewing, Approved, Paid),\none claim by its number or the most recent first. Needs an identified caller. Before calling this tool, speak\na brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    claim_id: Claim number such as RB-3001; leave empty for all claims of the account.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, claims (claim_id, program_name, amount, status, steps, submitted_on, note), card (the\n    show_claim_status_card arguments of the first claim), spoken_summary and agent_action."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_rebate_claim_status"

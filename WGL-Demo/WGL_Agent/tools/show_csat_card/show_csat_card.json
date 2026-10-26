@@ -4,7 +4,7 @@
   "displayName": "show_csat_card",
   "widgetTool": {
     "name": "show_csat_card",
-    "description": "Shows a satisfaction rating card on chat at the end of the session. No spoken pacing is needed. Call shape: name is always cx-show-csat-card and all card fields go inside payload.",
+    "description": "Shows a satisfaction rating card on chat at the end of the session. It is the whole reply: never end the session in the same reply, wait for the rating. No spoken pacing is needed. Call shape: name is always cx-show-csat-card and all card fields go inside payload.",
     "widgetType": "CUSTOM",
     "parameters": {
       "type": "OBJECT",

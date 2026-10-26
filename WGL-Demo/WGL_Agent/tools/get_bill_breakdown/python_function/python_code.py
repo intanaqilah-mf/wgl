@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def get_bill_breakdown(account_id: str = "", period: str = "", tenant: str = "") -> dict:
@@ -10,13 +10,15 @@ def get_bill_breakdown(account_id: str = "", period: str = "", tenant: str = "")
     while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         period: Optional billing period such as 2026-09; leave empty for the latest bill.
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
         dict with ok, period, total, items (label, amount), supply_share_pct, delivery_share_pct, card (the
-        show_bill_breakdown_card arguments), spoken_summary and agent_action.
+        show_bill_breakdown_card arguments), spoken_summary and agent_action; reconciliation_note and
+        reconciliation_adjustment appear only when the stored bill lines did not add up to the total and the
+        first line was adjusted to make them match.
     """
     try:
         return _finish("get_bill_breakdown", _get_bill_breakdown_impl(account_id=account_id, period=period))
@@ -212,8 +214,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -336,10 +341,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -354,12 +372,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -368,7 +385,7 @@ def _load_customer(account_id: str, required: str) -> tuple:
 
 def _billing_rows(account_id: str) -> list:
     """All billing periods of an account, newest first, each carrying its period key."""
-    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 20)
+    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 60)
     for row in rows:
         row["period"] = row.get("period") or row["_id"].removeprefix(f"{account_id}_")
     return sorted(rows, key=lambda row: str(row.get("end", "")), reverse=True)
@@ -409,9 +426,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 def _parse_date(value):
@@ -484,7 +521,7 @@ def _say_money(value) -> str:
 
 def _say_whole_dollars(value) -> str:
     """Says an amount rounded to whole dollars in words, for voice."""
-    dollars = int(round(abs(float(value or 0))))
+    dollars = int(abs(float(value or 0)) + 0.5)
     return f"{_words(dollars)} dollar{'' if dollars == 1 else 's'}"
 
 
@@ -590,8 +627,13 @@ def _get_bill_breakdown_impl(account_id: str, period: str) -> dict:
     items = [part for part in _group_items(row.get("line_items") or []) if part["amount"] != 0]
     total = _money(row.get("amount"))
     drift = round(total - sum(part["amount"] for part in items), 2)
+    note = ""
     if items and drift:
         items[0]["amount"] = _money(items[0]["amount"] + drift)
+        note = (
+            f"The bill lines on file differed from the bill total by ${abs(drift):,.2f}; that difference was "
+            f"{'added to' if drift > 0 else 'taken from'} the {items[0]['label']} line so the items match the total."
+        )
     supply = next((part["amount"] for part in items if part["label"] == "Gas supply"), 0.0)
     delivery = next((part["amount"] for part in items if part["label"] == "Delivery"), 0.0)
     supply_pct = int(round(supply / total * 100)) if total else 0
@@ -603,7 +645,7 @@ def _get_bill_breakdown_impl(account_id: str, period: str) -> dict:
     extras = [part for part in items if part["label"] not in ("Gas supply", "Delivery")]
     if extras:
         spoken += f" The rest is {', '.join(part['label'] for part in extras)}."
-    return {
+    result = {
         "ok": True,
         "period": row["period"],
         "total": total,
@@ -617,3 +659,12 @@ def _get_bill_breakdown_impl(account_id: str, period: str) -> dict:
             "distribution charge. Do not mention taxes or fees that are not in the items. The rider and adjustment lines are named exactly as listed."
         ),
     }
+    if note:
+        result["reconciliation_note"] = note
+        result["reconciliation_adjustment"] = drift
+        result["agent_action"] += (
+            " The line amounts were adjusted as the reconciliation_note says so they add up to the bill total: give the amounts as listed, "
+            "never claim a more precise supply figure, and if asked why the lines differ from the stored detail, say a "
+            "representative can review the line detail."
+        )
+    return result

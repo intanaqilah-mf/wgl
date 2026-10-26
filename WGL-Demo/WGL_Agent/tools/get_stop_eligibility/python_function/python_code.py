@@ -8,11 +8,12 @@ def get_stop_eligibility(account_id: str = "", tenant: str = "") -> dict:
     this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, eligible and reason.
+        dict with ok, eligible and reason. The check is recorded for the session; create_service_order
+        with type stop requires it and refuses an ineligible account.
     """
     try:
         return _finish("get_stop_eligibility", _get_stop_eligibility_impl(account_id=account_id))
@@ -164,8 +165,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -288,10 +292,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -306,24 +323,38 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
     return customer, {}
 
 
+def _record_check(account_id: str, eligible: bool) -> None:
+    """Remembers in the session record that the stop eligibility was checked for this account, so create_service_order can require it."""
+    try:
+        _commit([_set_write("wgl_sessions", _session_id(), {
+            "tenant": _tenant(), "stop_eligibility_account": account_id, "stop_eligibility_result": "eligible" if eligible else "ineligible",
+        })])
+    except Exception as err:
+        print(f"stop eligibility check not recorded: {err}")
+
+
 def _get_stop_eligibility_impl(account_id: str) -> dict:
     customer, error = _load_customer(account_id, "Identified")
     if error:
         return error
+    collections_or_shutoff = customer.get("credit_status") == "Collections" or bool(customer.get("shutoff_date"))
     if customer.get("stop_eligible") is not None:
         eligible = bool(customer["stop_eligible"])
     else:
-        eligible = customer.get("credit_status") != "Collections" and not customer.get("shutoff_date")
-    return {"ok": True, "eligible": eligible, "reason": "" if eligible else "account_in_collections_or_shutoff_notice"}
+        eligible = not collections_or_shutoff
+    _record_check(customer["_id"], eligible)
+    reason = ""
+    if not eligible:
+        reason = "account_in_collections_or_shutoff_notice" if collections_or_shutoff or customer.get("stop_eligible") is None else "account_not_eligible_for_online_stop"
+    return {"ok": True, "eligible": eligible, "reason": reason}

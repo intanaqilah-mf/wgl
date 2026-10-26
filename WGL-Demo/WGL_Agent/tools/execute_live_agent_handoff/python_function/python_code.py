@@ -261,17 +261,20 @@ _PERSON_REQUEST = re.compile(
     re.IGNORECASE,
 )
 _SPECIALIST_TOPIC = re.compile(
-    r"medical|life support|oxygen|ventilator|dialysis|death|died|passed away|estate|funeral|bereave|bankrupt|"
-    r"name change|change (?:the |my )?name|regulat|commission|attorney general|"
-    r"m[eé]dic|fallec|muri[oó]|quiebra|cambio de nombre|regulador",
+    r"medical|life[\s-]?support|oxygen|ventilator|dialysis|death|died|passed away|passed on|(?:husband|wife|father|mother|son|daughter|spouse|partner|dad|mom)\b[^.!?]{0,25}\bpassed\b|deceased|late (?:husband|wife|father|mother)|"
+    r"lost (?:my )?(?:husband|wife|father|mother|son|daughter)|estate|funeral|bereave|bankrupt|"
+    r"name change|change (?:the |my )?name|(?:update|change) the name|names? on (?:the |my )?account|regulat|commission|\bpsc\b|attorney general|"
+    r"m[e\u00e9]dic|fallec|muri[o\u00f3]|quiebra|cambio de nombre|regulador",
     re.IGNORECASE,
 )
+_SPECIALIST_QUEUES = ("medical", "bereavement", "regulatory")
+_AFFIRMATION = re.compile(r"^\W*(?:yes|yeah|yep|sure|ok|okay|please|absolutely|definitely|that would|that sounds|go ahead|do that|i would like that)\b", re.IGNORECASE)
 # Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
 _INTENT_ROUTES = (
-    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
-    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
-    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
-    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off (?:notice|date|warning)|shutoff|disconnect(?:ion)? (?:notice|date|warning)|(?:going|about) to (?:be )?(?:shut|cut|disconnect)|cut off|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|\bmov(?:e|ing)\b|reconnect|shut ?off (?:my|the) gas|turn off (?:my|the) gas|disconnect (?:my|the) (?:gas|service)|consumo|cita|medidor", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement|factura|saldo|pagar|pago", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint|apag[o\u00f3]n|interrupci[o\u00f3]n", re.IGNORECASE)),
 )
 
 
@@ -300,13 +303,13 @@ def _person_requested() -> bool:
     text = str(context.state.get("utterance", "") or "").strip()
     if not text or len(text.split()) <= 3:
         return True
-    return bool(_PERSON_REQUEST.search(text) or _SPECIALIST_TOPIC.search(text))
+    return bool(_AFFIRMATION.search(text) or _PERSON_REQUEST.search(text) or _SPECIALIST_TOPIC.search(text))
 
 
 def _execute_live_agent_handoff_impl(reason: str, context_packet: str, queue: str) -> dict:
     if not reason.strip():
         return _validation_error("the handoff reason")
-    if reason.strip() == "user_requested_agent" and not _person_requested():
+    if reason.strip() == "user_requested_agent" and (queue.strip() or _var("_escalation_topic")) not in _SPECIALIST_QUEUES and not _person_requested():
         return _error("business_rule", _no_handoff_action())
     queue_name = queue.strip() or _var("_escalation_topic", "billing") or "billing"
     controls = _controls()

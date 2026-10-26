@@ -20,7 +20,8 @@ def create_callback_ticket(
             service_abandonment and added_load for service requests that need a form.
         callback_number: Phone number to call back (REQUIRED).
         details: Everything collected so far, in plain text, for the callback agent.
-        account_id: Account id when the caller is identified; empty for guests.
+        account_id: Account id when the caller is identified; empty for guests (a guest ticket is
+            recorded with account guest).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
@@ -71,11 +72,27 @@ def _digits(text: str) -> str:
 def _e164(raw: str) -> str:
     """Normalizes a phone number to +1XXXXXXXXXX; returns an empty string when it is not a US number."""
     digits = _digits(raw)
-    if len(digits) == 10:
-        return f"+1{digits}"
     if len(digits) == 11 and digits.startswith("1"):
-        return f"+{digits}"
-    return ""
+        digits = digits[1:]
+    if len(digits) != 10:
+        return ""
+    # North American numbering plan: area code and exchange never start with 0 or 1, and never end in 11.
+    area, exchange = digits[:3], digits[3:6]
+    if area[0] in "01" or exchange[0] in "01" or area[1:] == "11" or exchange[1:] == "11":
+        return ""
+    return f"+1{digits}"
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _to_value(value) -> dict:
@@ -170,8 +187,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -264,13 +284,21 @@ def _create_callback_ticket_impl(reason: str, callback_number: str, details: str
     phone = _e164(callback_number)
     if not phone:
         return _validation_error("a ten-digit callback number")
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    if identified:
+        record_account = _resolve_account_id(account_id)
+        if not record_account:
+            return _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
+    else:
+        # A guest (or an invented id) is recorded with an explicit marker, never an empty account id.
+        record_account = "guest"
     ticket = _reference_number("cases", "CB")
     _commit([_set_write("wgl_callback_tickets", ticket, {
         "tenant": _tenant(),
         "reason": reason,
         "callback_number": phone,
-        "details": details,
-        "account_id": account_id.strip() or _object_var("identity_ctx").get("account_id", ""),
+        "details": str(details or "")[:2000],
+        "account_id": record_account,
         "status": "open",
         "session_id": _session_id(),
     }, "new")])

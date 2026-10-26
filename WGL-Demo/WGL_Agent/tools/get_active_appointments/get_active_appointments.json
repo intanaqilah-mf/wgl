@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_active_appointments",
     "pythonCode": "tools/get_active_appointments/python_function/python_code.py",
-    "description": "Lists the customer\u0027s upcoming appointments that are not cancelled. Needs an identified caller.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and appointments (appointment_id, type, slot, status)."
+    "description": "Lists the customer\u0027s upcoming appointments that are not cancelled or completed, soonest first;\npast appointments are not listed. Needs an identified caller.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and appointments (appointment_id, type, slot, status)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_active_appointments"

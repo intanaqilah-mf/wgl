@@ -13,7 +13,8 @@ def find_payment_locations(tenant: str = "", zip_or_city: str = "") -> dict:
 
     Returns:
         dict with ok, matched_area and locations (name, address, hours, cash_accepted, type);
-        matched_area is false when the nearest list is returned instead of an exact match.
+        matched_area is false when the nearest list is returned instead of an exact match. A ZIP+4
+        matches its ZIP and "City, ST" matches the city.
     """
     try:
         return _finish("find_payment_locations", _find_payment_locations_impl(zip_or_city=zip_or_city))
@@ -169,8 +170,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -230,8 +234,11 @@ def _find_payment_locations_impl(zip_or_city: str) -> dict:
     term = zip_or_city.strip().lower()
     if not term:
         return _validation_error("a ZIP code or city")
+    terms = {term, term.split(",")[0].strip()}
+    if len(term) >= 5 and term[:5].isdigit():
+        terms.add(term[:5])
     locations = _run_query("wgl_payment_locations", {"tenant": _tenant()}, 60)
-    matched = [item for item in locations if term in (str(item.get("zip", "")).lower(), str(item.get("city", "")).lower())]
+    matched = [item for item in locations if terms & {str(item.get("zip", "")).lower(), str(item.get("city", "")).lower()}]
     chosen = (matched or locations)[:5]
     keys = ("name", "address", "hours", "cash_accepted", "type")
     return {"ok": True, "matched_area": bool(matched), "locations": [{key: item.get(key) for key in keys} for item in chosen]}

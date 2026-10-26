@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_outage_eta",
     "pythonCode": "tools/get_outage_eta/python_function/python_code.py",
-    "description": "Gives the latest estimated restoration time for an outage incident, and whether the estimate\nchanged. Works for guests. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    incident_id: Incident id from check_outage_status or create_outage_incident (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, status, eta, previous_eta and eta_changed."
+    "description": "Gives the latest estimated restoration time for an outage incident, and whether the estimate\nchanged. Works for guests. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    incident_id: Incident id from check_outage_status or create_outage_incident (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, status, eta, previous_eta, eta_changed and eta_passed. When eta_passed is true the\n    estimate is in the past: eta is empty, never state a restoration time and follow agent_action."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_outage_eta"

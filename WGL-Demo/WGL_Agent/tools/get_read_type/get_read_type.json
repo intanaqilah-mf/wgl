@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_read_type",
     "pythonCode": "tools/get_read_type/python_function/python_code.py",
-    "description": "Says whether a bill is based on an actual or an estimated meter read, with any estimate\ncorrection. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    period: Billing period key such as 2026-10 (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, period, read_type (actual or estimated), estimate_adjustment and\n    corrected_from."
+    "description": "Says whether a bill is based on an actual or an estimated meter read, with any estimate\ncorrection. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    period: Billing period key such as 2026-10 (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, period, read_type (actual or estimated), estimate_adjustment and\n    corrected_from."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_read_type"

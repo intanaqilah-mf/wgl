@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_wgl_pay_extension_eligibility",
     "pythonCode": "tools/get_wgl_pay_extension_eligibility/python_function/python_code.py",
-    "description": "Says whether the customer can still take a payment extension this billing cycle (one per cycle)\nand the latest new due date allowed. Needs an identified caller. Before calling this tool, speak\na brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, eligible, max_new_due_date and reason."
+    "description": "Says whether the customer can still take a payment extension this billing cycle (one per cycle)\nand the latest new due date allowed. Needs an identified caller. Before calling this tool, speak\na brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, eligible, max_new_due_date and reason."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_wgl_pay_extension_eligibility"

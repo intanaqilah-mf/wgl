@@ -1,4 +1,5 @@
 import json
+import re
 import time
 
 
@@ -109,8 +110,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -161,6 +165,13 @@ def _finish(tool_name: str, result: dict) -> dict:
     return result
 
 
+def _scrub(text: str) -> str:
+    """Removes long digit runs (account numbers, SSN-style and grouped numbers) from the summary before it is stored."""
+    text = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[removed]", text)
+    text = re.sub(r"\b\d{4}[- ]\d{4}[- ]\d{4}\b", "[removed]", text)
+    return re.sub(r"\d{9,}", "[removed]", text)
+
+
 def _session_store_write_impl(session_context: str) -> dict:
     _commit([_set_write("wgl_sessions", _session_id(), {
         "tenant": _tenant(),
@@ -170,6 +181,6 @@ def _session_store_write_impl(session_context: str) -> dict:
         "auth_method_tier1": _var("auth_method_tier1"),
         "auth_method_tier2": _var("auth_method_tier2"),
         "escalation_reason": _var("_escalation_reason"),
-        "summary": str(session_context)[:2000],
+        "summary": _scrub(str(session_context))[:2000],
     })])
     return {"ok": True}

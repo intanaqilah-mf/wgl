@@ -10,13 +10,15 @@ def run_high_bill_diagnosis(account_id: str = "") -> dict:
     pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
 
     Returns:
         dict with ok, lookups, history, read_type, period_days, weather, usage, wna, bill_delta,
         attribution, reconciliation and flags (estimated_read, unexplained_anomaly,
         seasonal_spike, arrears_present, jurisdiction, wna_applicable); on failure ok is false
-        with agent_action.
+        with agent_action. When there is too little history (fewer than two bills) or no weather
+        data, ok stays true and limited_data says why, with an agent_action that explains it plainly
+        (the diagnosis is not an outage and is not retried).
     """
     try:
         return _finish("run_high_bill_diagnosis", _run_high_bill_diagnosis_impl(account_id=account_id))
@@ -211,8 +213,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -340,8 +345,9 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
 
@@ -349,6 +355,18 @@ def _auth_gate(required: str) -> dict:
 def _wna_applies(customer: dict) -> bool:
     """WNA applies to Washington Gas customers in Virginia only (BR-GU-018, BR-GU-029)."""
     return _tenant() == "WGL" and customer.get("jurisdiction") == "VA"
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -363,12 +381,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -377,7 +394,7 @@ def _load_customer(account_id: str, required: str) -> tuple:
 
 def _billing_rows(account_id: str) -> list:
     """All billing periods of an account, newest first, each carrying its period key."""
-    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 20)
+    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 60)
     for row in rows:
         row["period"] = row.get("period") or row["_id"].removeprefix(f"{account_id}_")
     return sorted(rows, key=lambda row: str(row.get("end", "")), reverse=True)
@@ -547,23 +564,49 @@ def _reason_rows(attribution: dict, current: dict, previous: dict) -> dict:
         rows.append({"label": label, "amount": round(float(amount), 2), "direction": "up" if float(amount) > 0 else "down", "icon": _REASON_ICON.get(key, "info")})
     rows.sort(key=lambda row: abs(row["amount"]), reverse=True)
     delta = float(attribution["delta"])
-    total = texts["total_up" if delta >= 0 else "total_down"].format(amount=f"${round(abs(delta)):,}")
+    total = texts["total_up" if delta >= 0 else "total_down"].format(amount=f"${int(abs(delta) + 0.5):,}")
     return {"reasons": rows, "reasons_total_note": total}
+
+
+def _limited_data_result(customer: dict, rows: list, lookups: list) -> dict:
+    """Too little billing history to compare bills: not a system failure, so say so plainly (ok with a limited_data note)."""
+    current = rows[0] if rows else {}
+    count = len(rows)
+    return {
+        "ok": True,
+        "lookups": lookups,
+        "history": [_period_summary(row) for row in rows],
+        "limited_data": {
+            "reason": "too_few_billing_periods",
+            "periods_on_file": count,
+            "note": "Fewer than two billing periods are on file, so this bill cannot be compared with an earlier one.",
+        },
+        "flags": {
+            "estimated_read": current.get("read_type") == "estimated",
+            "arrears_present": float(customer.get("arrears") or 0) > 0,
+            "jurisdiction": customer.get("jurisdiction", ""),
+            "wna_applicable": False,
+        },
+        "agent_action": (
+            "Say plainly and kindly that there is not enough billing history on this account yet to compare this bill with an earlier "
+            "one" + (", and state only the bill amount, usage and dates shown in history. " if count else ". ")
+            + "Do not guess at the reason for the amount, do not say the systems are down or having trouble, and do not offer a retry. "
+            "Offer to go through what the bill is made of with the bill breakdown, or to connect a representative."
+        ),
+    }
 
 
 def _diagnose(customer: dict, rows: list) -> dict:
     """Runs the five lookups and builds the raw diagnosis the agent explains from."""
-    lookups = [{"name": "get_billing_history", "status": "ok" if len(rows) >= 2 else "failed", "reason": "" if len(rows) >= 2 else "fewer than two billing periods"}]
+    lookups = [{"name": "get_billing_history", "status": "ok" if len(rows) >= 2 else "limited", "reason": "" if len(rows) >= 2 else "fewer than two billing periods"}]
     if len(rows) < 2:
-        return _diagnosis_failure(lookups)
+        return _limited_data_result(customer, rows, lookups)
     current, previous = rows[0], rows[1]
     prior_year = next((row for row in rows if row["period"] == _prior_year_period(current["period"])), None)
     lookups.append({"name": "get_read_type", "status": "ok", "reason": ""})
     lookups.append({"name": "period_days", "status": "ok", "reason": ""})
     weather = _get_doc("wgl_weather_hdd", f"{customer.get('zip', '')}_{current['period']}")
-    lookups.append({"name": "nws_hdd_api", "status": "ok" if weather else "failed", "reason": "" if weather else "no weather data for the ZIP and period"})
-    if not weather:
-        return _diagnosis_failure(lookups)
+    lookups.append({"name": "nws_hdd_api", "status": "ok" if weather else "limited", "reason": "" if weather else "no weather data for the ZIP and period"})
     wna_applies = _wna_on_current_bill(customer, current)
     lookups.append({"name": "get_wna_amount", "status": "ok" if _wna_applies(customer) else "skipped", "reason": "" if _wna_applies(customer) else "not_wgl_virginia"})
     attribution = _attribution(previous, current, weather, wna_applies)
@@ -572,7 +615,7 @@ def _diagnose(customer: dict, rows: list) -> dict:
     recent = rows[:_RECENT_PERIODS] + ([prior_year] if prior_year and prior_year not in rows[:_RECENT_PERIODS] else [])
     prior_year_usage = prior_year.get("usage") if prior_year else None
     current_usage = current.get("usage")
-    return {
+    result = {
         "ok": True,
         "lookups": lookups,
         "history": [_period_summary(row) for row in recent],
@@ -604,6 +647,19 @@ def _diagnose(customer: dict, rows: list) -> dict:
         "flags": _flags(customer, current, attribution, hdd_change_pct),
         **_reason_rows(attribution, current, previous),
     }
+    if not weather:
+        result["limited_data"] = {
+            "reason": "no_weather_data",
+            "note": "No weather data is on file for this ZIP code and billing period, so the effect of the weather on this bill cannot be measured.",
+        }
+        result["flags"]["unexplained_anomaly"] = False
+        result["agent_action"] = (
+            "Say plainly that weather data for this area and billing period is not available, so you cannot say how much the weather "
+            "contributed. Explain only from the figures that are present (billing days, usage, rate, estimated read, weather normalization when "
+            "it applies); never attribute the remainder to the weather or call it a problem, do not say the systems are down, and offer "
+            "the bill breakdown or a representative for more detail."
+        )
+    return result
 
 
 def _run_high_bill_diagnosis_impl(account_id: str) -> dict:

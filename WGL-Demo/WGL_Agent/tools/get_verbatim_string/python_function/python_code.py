@@ -1,7 +1,7 @@
 import json
 import re
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def get_verbatim_string(key: str = "", language: str = "", params: str = "", deliver: str = "") -> dict:
@@ -15,7 +15,9 @@ def get_verbatim_string(key: str = "", language: str = "", params: str = "", del
             emergency_safety_instruction, empathy_protocol, live_agent_handoff or after_hours_message
             (REQUIRED).
         language: EN or ES; empty uses the current session language.
-        params: Optional JSON object text with extra placeholder values; usually empty.
+        params: Optional JSON object text with extra placeholder values; usually empty. Values the configuration or the
+            account already supplies (brand, phone numbers, hours, fees, limits, emergency number) are never overridden.
+        deliver: Set by the system to callback when a callback speaks the text; leave empty.
 
     Returns:
         dict with ok, key, status (confirmed or demo_placeholder), language, text and
@@ -186,8 +188,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -260,9 +265,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 # Month names used to fill the {date} placeholder of a verbatim string.
@@ -340,6 +365,22 @@ def _verbatim_values(language_code: str) -> dict:
     values.update(_fee_values(config=config))
     values["emergency_number"] = values.get("phone_emergency", "")
     return values
+
+
+# Values that come from the tenant configuration (brand, phone numbers, hours, fees, limits, the emergency number) are legally
+# required wording: a key the configuration owns is never taken from the model-supplied params (the configuration wins).
+_CONFIG_OWNED_PREFIXES = ("phone_", "hours_", "fee_", "limit_")
+_CONFIG_OWNED_KEYS = ("brand", "emergency_number")
+
+
+def _allowed_params(params: str, values: dict) -> dict:
+    """The model-supplied placeholder values without any key the configuration or the account already supplies."""
+    allowed = {}
+    for key, value in _parse_params(params).items():
+        owned = key in _CONFIG_OWNED_KEYS or key.startswith(_CONFIG_OWNED_PREFIXES) or bool(str(values.get(key, "")).strip())
+        if not owned:
+            allowed[key] = value
+    return allowed
 
 
 def _parse_params(params: str) -> dict:
@@ -561,7 +602,7 @@ def _get_verbatim_string_impl(key: str, language: str, params: str, deliver: str
             "No card convenience fee applies to this customer's jurisdiction (Virginia customers are not charged). "
             "Do not say this text or anything like it and do not mention a convenience fee; continue with the next step.",
         )
-    values.update(_parse_params(params))
+    values.update(_allowed_params(params, values))
     values.update(_account_values(key=key, language_code=language_code))
     if key in _WNA_KEYS and not values.get("amount"):
         return _error(

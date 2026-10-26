@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "check_active_service_at_address",
     "pythonCode": "tools/check_active_service_at_address/python_function/python_code.py",
-    "description": "Checks whether gas service is already active at an address, which decides between a new start\nand a transfer. Before calling this tool, speak a brief conversational pacing phrase while it\nruns.\n\nArgs:\n    address: The standardized service address (REQUIRED).\n\nReturns:\n    dict with ok, found, active_service and occupied."
+    "description": "Checks whether gas service is already active at an address, which decides between a new start\nand a transfer. Before calling this tool, speak a brief conversational pacing phrase while it\nruns.\n\nArgs:\n    address: The standardized service address (REQUIRED).\n\nReturns:\n    dict with ok, found, active_service and occupied. The result is recorded for the session;\n    create_service_order refuses a plain start at an address that is active and occupied (offer a transfer)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "check_active_service_at_address"

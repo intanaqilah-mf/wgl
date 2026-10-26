@@ -36,6 +36,11 @@
             "method_last4": {
               "type": "STRING",
               "description": "Last 4 digits of the card or bank account; never a full number."
+            },
+            "method_type": {
+              "type": "STRING",
+              "description": "card or bank, so a bank payment is not labelled as a card.",
+              "enum": ["card", "bank"]
             }
           },
           "required": ["amount", "confirmation"],

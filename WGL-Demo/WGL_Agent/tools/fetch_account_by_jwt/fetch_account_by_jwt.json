@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "fetch_account_by_jwt",
     "pythonCode": "tools/fetch_account_by_jwt/python_function/python_code.py",
-    "description": "Demo-only portal sign-in lookup that reads the account id claim of a sign-in token and marks the\ncaller Authenticated. Not attached to any agent because the demo has no portal login; the token\nsignature is not verified. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    jwt_token: Sign-in token issued by the customer portal (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found, auth_status, account_id and customer_name."
+    "description": "Demo-only portal sign-in lookup that reads the account id claim of a sign-in token and marks the\ncaller Authenticated. Not attached to any agent because the demo has no portal login; the token\nsignature is not verified. Before calling this tool, speak a brief conversational pacing phrase\nwhile it runs.\n\nArgs:\n    jwt_token: Sign-in token issued by the customer portal (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, found, auth_status, account_id and customer_name; account_locked true when the online account is locked (offer the unlock flow)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "fetch_account_by_jwt"

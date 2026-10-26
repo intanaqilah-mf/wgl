@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "validate_cc_last4",
     "pythonCode": "tools/validate_cc_last4/python_function/python_code.py",
-    "description": "Checks the last 4 digits of the card on file against the account (only when get_auth_options\nreturned cc_on_file true). The digits are never repeated back or logged. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    cc_last4: The four digits, spoken, keyed or typed (REQUIRED).\n    gateway: Payment gateway label of the tenant (Kubra for Washington Gas, Invoice Cloud for\n        SEMCO); informational.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
+    "description": "Checks the last 4 digits of the card on file against the account (only when get_auth_options\nreturned cc_on_file true). The digits are never repeated back or logged. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    cc_last4: The four digits, spoken, keyed or typed (REQUIRED).\n    gateway: Payment gateway label of the tenant (Kubra for Washington Gas, Invoice Cloud for\n        SEMCO); informational.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "validate_cc_last4"

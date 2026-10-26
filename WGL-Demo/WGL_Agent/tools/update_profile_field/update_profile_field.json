@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "update_profile_field",
     "pythonCode": "tools/update_profile_field/python_function/python_code.py",
-    "description": "Updates the phone number, email or mailing address on the account after the customer confirmed\nthe change. A name change is never done here and always goes to a representative. Needs an\nauthenticated caller. Before calling this tool, speak a brief conversational pacing phrase while\nit runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    field: phone, email or mailing_address (REQUIRED).\n    value: The new value (REQUIRED); a mailing address should be validated first.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, field, previous_value and new_value (phone shown as last 4 digits only)."
+    "description": "Updates the phone number, email or mailing address on the account after the customer confirmed\nthe change. A name change is never done here and always goes to a representative. Needs an\nauthenticated caller. Before calling this tool, speak a brief conversational pacing phrase while\nit runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    field: phone, email or mailing_address (REQUIRED).\n    value: The new value (REQUIRED); a mailing address should be validated first.\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, field, previous_value and new_value (phone shown as last 4 digits only, email masked)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "update_profile_field"

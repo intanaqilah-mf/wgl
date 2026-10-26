@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def get_bill_history(account_id: str = "", months: int = 12, tenant: str = "") -> dict:
@@ -10,7 +10,7 @@ def get_bill_history(account_id: str = "", months: int = 12, tenant: str = "") -
     this tool, speak a brief conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the identified account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         months: How many months to return, 2 to 13; the default is 12.
         tenant: Injected by the system from tenant_id; leave empty.
 
@@ -213,8 +213,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -337,10 +340,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -355,12 +371,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -369,7 +384,7 @@ def _load_customer(account_id: str, required: str) -> tuple:
 
 def _billing_rows(account_id: str) -> list:
     """All billing periods of an account, newest first, each carrying its period key."""
-    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 20)
+    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 60)
     for row in rows:
         row["period"] = row.get("period") or row["_id"].removeprefix(f"{account_id}_")
     return sorted(rows, key=lambda row: str(row.get("end", "")), reverse=True)
@@ -410,9 +425,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 def _parse_date(value):
@@ -485,7 +520,7 @@ def _say_money(value) -> str:
 
 def _say_whole_dollars(value) -> str:
     """Says an amount rounded to whole dollars in words, for voice."""
-    dollars = int(round(abs(float(value or 0))))
+    dollars = int(abs(float(value or 0)) + 0.5)
     return f"{_words(dollars)} dollar{'' if dollars == 1 else 's'}"
 
 
@@ -563,7 +598,7 @@ def _say_amount_text(amount: str) -> str:
 
 def _highlight(change: float) -> str:
     """The card note comparing the latest bill with the one before it, in whole dollars."""
-    whole = int(round(abs(change)))
+    whole = int(abs(change) + 0.5)
     if whole == 0:
         return "About the same as last month"
     return f"${whole} {'higher' if change > 0 else 'lower'} than last month"
@@ -593,7 +628,7 @@ def _get_bill_history_impl(account_id: str, months: int) -> dict:
     last_year = next((row for row in rows if row["period"] == _prior_year_key(rows[0]["period"])), None)
     note = _highlight(change)
     spoken = f"Your latest bill is {_say_money(current)}, which is {_say_whole_dollars(change)} {'higher' if change > 0 else 'lower'} than last month."
-    if int(round(abs(change))) == 0:
+    if int(abs(change) + 0.5) == 0:
         spoken = f"Your latest bill is {_say_money(current)}, about the same as last month."
     if last_year:
         spoken += f" A year ago the same month was {_say_money(last_year.get('amount'))}."

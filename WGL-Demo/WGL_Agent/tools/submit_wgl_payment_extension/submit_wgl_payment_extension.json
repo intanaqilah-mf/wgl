@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "submit_wgl_payment_extension",
     "pythonCode": "tools/submit_wgl_payment_extension/python_function/python_code.py",
-    "description": "Moves the due date to a later date within the allowed maximum; one extension per billing cycle.\nNeeds an authenticated caller who chose the date. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    new_due_date: New due date, YYYY-MM-DD (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number and new_due_date."
+    "description": "Moves the due date to a later date within the allowed maximum; one extension per billing cycle.\nNeeds an authenticated caller who chose the date. Before calling this tool, speak a brief\nconversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    new_due_date: New due date, YYYY-MM-DD (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, confirmation_number and new_due_date. When the account has a shutoff date earlier\n    than the new due date, the shutoff date moves to the new due date as well."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "submit_wgl_payment_extension"

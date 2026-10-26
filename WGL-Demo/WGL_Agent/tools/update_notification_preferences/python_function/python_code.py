@@ -8,13 +8,13 @@ def update_notification_preferences(account_id: str = "", prefs: str = "", tenan
     conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the authenticated account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         prefs: JSON object text mapping an event name to its channels, for example an event with
             sms and email set to true or false (REQUIRED).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok and notification_prefs after the change.
+        dict with ok and notification_prefs as stored after the change (read back; merged per event and channel).
     """
     try:
         return _finish("update_notification_preferences", _update_notification_preferences_impl(account_id=account_id, prefs=prefs))
@@ -166,8 +166,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -301,10 +304,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -319,22 +335,83 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
     return customer, {}
 
 
+def _pref_flag(value):
+    """True or False for a bool or a clear yes/no word; None when it is unclear."""
+    if isinstance(value, bool):
+        return value
+    text = str(value if value is not None else "").strip().lower()
+    if text in ("true", "yes", "on", "start", "1"):
+        return True
+    if text in ("false", "no", "off", "stop", "0"):
+        return False
+    return None
+
+
+def _clean_changes(changes: dict, existing: dict) -> tuple:
+    """Normalizes the requested change to {event: {channel: bool}}; returns (clean, problem).
+
+    A plain true or false for an event applies to every channel already stored for that event (sms and email when none).
+    """
+    clean = {}
+    channel_names = {"sms": ["sms"], "text": ["sms"], "texts": ["sms"], "email": ["email"], "emails": ["email"], "all": ["sms", "email"]}
+    for event, channels in changes.items():
+        name = str(event).strip()
+        if not name:
+            return {}, "an event name for each preference"
+        if name.lower() in channel_names and not isinstance(channels, dict):
+            flag = _pref_flag(channels)
+            if flag is None:
+                return {}, f"true or false for {name}"
+            stored_events = [key for key in existing.keys() if key.lower() not in channel_names]
+            if not stored_events:
+                return {}, "which notification (for example the bill or the payment) to change, because no notification settings are stored yet"
+            for stored in stored_events:
+                merged_channels = dict(clean.get(stored, {}))
+                merged_channels.update({channel: flag for channel in channel_names[name.lower()]})
+                clean[stored] = merged_channels
+            continue
+        if isinstance(channels, dict):
+            parsed = {str(channel).strip(): _pref_flag(flag) for channel, flag in channels.items() if str(channel).strip()}
+            if any(channel not in ("sms", "email") for channel in parsed):
+                return {}, f"only sms and email as channels for {name}"
+            if not parsed or any(flag is None for flag in parsed.values()):
+                return {}, f"sms and email as true or false for {name}"
+            clean[name] = parsed
+            continue
+        flag = _pref_flag(channels)
+        if flag is None:
+            return {}, f"true or false for {name}"
+        current = existing.get(name)
+        keys = list(current.keys()) if isinstance(current, dict) and current else ["sms", "email"]
+        clean[name] = {key: flag for key in keys}
+    return clean, ""
+
+
+def _locked_block(customer: dict) -> dict:
+    """Refuses a change while the online account is locked: the caller must unlock it first (unlock_account)."""
+    if not customer.get("account_locked"):
+        return {}
+    return _error(
+        "business_rule",
+        "The online account is locked, so this change is refused until it is unlocked. Offer to unlock it now: the caller must be "
+        "verified, then call unlock_account, then repeat the change.",
+        account_locked=True,
+    )
+
+
 def _update_notification_preferences_impl(account_id: str, prefs: str) -> dict:
     try:
         changes = json.loads(prefs)
-    except ValueError:
+    except (TypeError, ValueError):
         return _validation_error("preferences as a JSON object")
     if not isinstance(changes, dict) or not changes:
         return _validation_error("at least one notification preference")
@@ -344,7 +421,25 @@ def _update_notification_preferences_impl(account_id: str, prefs: str) -> dict:
     customer, error = _load_customer(account_id, "Authenticated")
     if error:
         return error
-    merged = dict(customer.get("notification_prefs") or {})
-    merged.update(changes)
+    locked = _locked_block(customer)
+    if locked:
+        return locked
+    existing = customer.get("notification_prefs")
+    existing = existing if isinstance(existing, dict) else {}
+    clean, problem = _clean_changes(changes, existing)
+    if problem:
+        return _validation_error(problem)
+    # Merge per event and channel, so changing sms for one event never drops its email setting or another event.
+    merged = {event: (dict(channels) if isinstance(channels, dict) else channels) for event, channels in existing.items()}
+    for event, channels in clean.items():
+        current = merged.get(event)
+        merged[event] = dict(current, **channels) if isinstance(current, dict) else channels
     _commit([_set_write("wgl_customers", customer["_id"], {"notification_prefs": merged}, "must")])
-    return {"ok": True, "notification_prefs": merged}
+    stored = _get_doc("wgl_customers", customer["_id"]).get("notification_prefs")
+    if stored != merged:
+        return _error(
+            "transient",
+            "The notification change could not be confirmed as saved. Do not tell the customer it was changed. Retry once; if it "
+            "fails again apologize and offer a representative.",
+        )
+    return {"ok": True, "notification_prefs": stored}

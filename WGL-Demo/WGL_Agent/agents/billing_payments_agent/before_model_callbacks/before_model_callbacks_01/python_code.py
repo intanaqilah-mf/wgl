@@ -50,8 +50,9 @@ _PERSON_REQUEST = re.compile(
     re.IGNORECASE,
 )
 _SPECIALIST_TOPIC = re.compile(
-    r"medical|life support|oxygen|ventilator|dialysis|death|died|passed away|estate|funeral|bereave|bankrupt|"
-    r"name change|change (?:the |my )?name|regulat|commission|attorney general|"
+    r"medical|life[\s-]?support|oxygen|ventilator|dialysis|death|died|passed away|passed on|(?:husband|wife|father|mother|son|daughter|spouse|partner|dad|mom)\b[^.!?]{0,25}\bpassed\b|deceased|late (?:husband|wife|father|mother)|"
+    r"lost (?:my )?(?:husband|wife|father|mother|son|daughter)|estate|funeral|bereave|bankrupt|"
+    r"name change|change (?:the |my )?name|(?:update|change) the name|names? on (?:the |my )?account|regulat|commission|\bpsc\b|attorney general|"
     r"m[eé]dic|fallec|muri[oó]|quiebra|cambio de nombre|regulador",
     re.IGNORECASE,
 )
@@ -410,6 +411,78 @@ def _trigger_response(state: dict, trigger: str, callback_context: CallbackConte
     return None
 
 
+# Keyword backstop for a gas emergency: the safety response used to depend on the model calling set_session_state. A caller who
+# reports a gas smell, a leak, carbon monoxide or an explosion gets the emergency flow even when the model does not trigger it.
+_EMERGENCY_TEXT = re.compile(
+    r"smell(?:s|ed|ing)?\s+(?:of\s+|like\s+)?(?:natural\s+)?gas|(?:natural\s+)?gas\s+(?:smell|odou?r|leak|leaking|is\s+leaking)|(?:leak|leaks|leaking)\s+(?:natural\s+)?gas|"
+    r"rotten\s+eggs?|(?:smell|smells|smelling|odou?r)\s+(?:of\s+|like\s+)?sulfur|sulfur\s+(?:smell|odou?r)|"
+    r"(?:carbon\s+monoxide|\bco)\s+(?:alarm|detector|monitor)\b[^.!?]{0,30}\b(?:going\s+off|beeping|sounding|alarming|went\s+off|keeps\s+going|chirping|activated)|"
+    r"gas\s+explosion|hissing\s+(?:sound\s+)?(?:from|near)\s+(?:a\s+|the\s+)?(?:gas|pipe|line|meter)|"
+    r"huel[eo]\s+a\s+gas|olor\s+a\s+gas|fuga\s+de\s+gas|escape\s+de\s+gas",
+    re.IGNORECASE,
+)
+_NEGATED = re.compile(r"\b(?:no(?!\s+(?:i|we|my|the|it|there)\b)|not|don'?t|do\s+not|never|without|isn'?t|aren'?t|stopped|used\s+to)\b[^.!?]{0,14}$", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[.,;:!?]|\b(?:but|and|so|then|now|wait|actually|because|however)\b", re.IGNORECASE)
+_EMERGENCY_REPEAT = re.compile(r"\b(?:smell|smells|smelling|odou?r|hissing|leak|leaking|alarm|beeping)\b", re.IGNORECASE)
+
+
+def _negated_at(text: str, start: int) -> bool:
+    """True when a negation ("no", "don't", "never") stands in the same clause just before the match; an earlier clause does not count."""
+    before = _CLAUSE_BREAK.split(text[max(0, start - 24):start])[-1]
+    return bool(_NEGATED.search(before))
+
+
+def _emergency_in(text: str, repeat: bool = False) -> bool:
+    """True when the text reports a gas emergency and the report is not negated ("I don't smell gas").
+
+    After an emergency was already handled in this conversation (repeat), a short follow-up such as "the smell is back" counts too.
+    """
+    for match in _EMERGENCY_TEXT.finditer(text or ""):
+        if not _negated_at(text, match.start()):
+            return True
+    if repeat and len((text or "").split()) <= 8:
+        for match in _EMERGENCY_REPEAT.finditer(text):
+            if not _negated_at(text, match.start()):
+                return True
+    return False
+
+
+def _turn_number(callback_context: CallbackContext) -> int:
+    """How many caller messages there have been (0 when the conversation cannot be read)."""
+    try:
+        return sum(1 for event in callback_context.events if event.is_user())
+    except Exception:
+        return 0
+
+
+def _expire_consumed_task(state: dict, callback_context: CallbackContext) -> None:
+    """A saved request that a specialist already picked up (after identification) is cleared on the next caller message, so a
+    later question is never mistaken for the old task."""
+    saved = _saved_task(state)
+    resumed_turn = saved.get("resume_turn")
+    if saved.get("saved") and saved.get("resume_offered") and isinstance(resumed_turn, (int, float)) and not isinstance(resumed_turn, bool) and _turn_number(callback_context) > resumed_turn:
+        state["saved_task_state"] = dict(saved, saved=False, resume_offered=False, pending_intent="")
+
+
+_TYPED_ID_METHODS = ("MobileNum", "NameAddress", "AccountNum")
+
+
+def _prepare_welcome_line(state: dict) -> None:
+    """The one personal line (thanks, the first name, the next step) after a caller identified by typing their details: set up once,
+    for the first agent that takes over. A line joined to the first reply when a request was saved, the whole reply otherwise."""
+    if _THIS_AGENT == "auth_agent" or str(state.get("_welcome_line_mode", "")) or str(state.get("identification_status", "")) != "Pass":
+        return
+    if str(state.get("auth_method_tier1", "")) not in _TYPED_ID_METHODS or str(state.get("auth_status", "Guest")) not in ("Identified", "Authenticated"):
+        return
+    task_pending = bool(_saved_task(state).get("saved"))
+    line = _welcome_line(state, task_pending=task_pending)
+    if line:
+        state["_welcome_line"] = line
+        state["_welcome_line_mode"] = "prefix" if task_pending else "alone"
+    else:
+        state["_welcome_line_mode"] = "done"
+
+
 def _no_input_response(state: dict) -> LlmResponse:
     """Strikes 1 and 2 reassure the caller; strike 3 hands off (no_input_escalation)."""
     strikes = int(state.get("local_noinput_counter") or 0) + 1
@@ -429,6 +502,13 @@ def before_model_callback(callback_context: CallbackContext, llm_request: LlmReq
         return _no_input_response(state)
     _track_keypad(state, user_text)
     state["local_noinput_counter"] = "0"
+
+    _expire_consumed_task(state, callback_context)
+    if user_text and not state.get("_action_trigger") and str(state.get("emergency_detected", "false")).lower() != "true" and _emergency_in(user_text, str(state.get("_emergency_card_shown", "false")).lower() == "true"):
+        print(f"{_THIS_AGENT}: gas emergency words in the caller's message; starting the emergency flow")
+        state["emergency_detected"] = "true"
+        state["_action_trigger"] = "emergency"
+    _prepare_welcome_line(state)
 
     _settle_after_emergency(state)
     trigger = str(state.get("_action_trigger", ""))

@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime, timedelta, timezone
 
 
 def get_outage_eta(incident_id: str = "", tenant: str = "") -> dict:
@@ -12,7 +13,8 @@ def get_outage_eta(incident_id: str = "", tenant: str = "") -> dict:
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, status, eta, previous_eta and eta_changed.
+        dict with ok, status, eta, previous_eta, eta_changed and eta_passed. When eta_passed is true the
+        estimate is in the past: eta is empty, never state a restoration time and follow agent_action.
     """
     try:
         return _finish("get_outage_eta", _get_outage_eta_impl(incident_id=incident_id))
@@ -197,8 +199,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -290,6 +295,55 @@ def _injected_failure(kind: str, controls: dict) -> str:
     return mode if mode in _FAILURE_KINDS[kind] else ""
 
 
+# An active outage whose estimated time passed more than this many days ago is a stale record, not a live outage.
+_STALE_AFTER_DAYS = 14
+
+
+def _local_now(tz_name: str = "America/New_York") -> datetime:
+    """Current time in the outage's time zone as a naive datetime; demo_ctx.demo_clock_override replaces it when set."""
+    moment = datetime.now(timezone.utc)
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            moment = datetime.fromisoformat(str(override).replace("Z", "+00:00"))
+            if moment.tzinfo is None:
+                return moment
+        except ValueError:
+            print("demo_clock_override is not ISO 8601; the real clock is used")
+            moment = datetime.now(timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        return moment.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        offset = -4 if 3 <= moment.month <= 10 else -5
+        return (moment.astimezone(timezone.utc) + timedelta(hours=offset)).replace(tzinfo=None)
+
+
+def _parse_local(value, tz_name: str = "America/New_York"):
+    """Parses a stored ISO time into a naive datetime in the outage's time zone; None when it is empty or not a time."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed
+    try:
+        from zoneinfo import ZoneInfo
+        return parsed.astimezone(ZoneInfo(tz_name or "America/New_York")).replace(tzinfo=None)
+    except Exception:
+        return parsed.replace(tzinfo=None)
+
+
+_ETA_PASSED_ACTION = (
+    "The estimated restoration time for this outage has already passed, so do not state any restoration time or date. "
+    "Say with empathy that crews are still working to restore service, thank the caller for waiting, say there is no need "
+    "to report the outage again, and offer a text message when service is restored (register_restoration_sms)."
+)
+
+
 def _get_outage_eta_impl(incident_id: str) -> dict:
     if not incident_id.strip():
         return _validation_error("the incident id")
@@ -301,4 +355,12 @@ def _get_outage_eta_impl(incident_id: str) -> dict:
     if not record:
         return _rule_error("no outage incident was found with that id", "check the incident number")
     eta, previous = record.get("eta", ""), record.get("previous_eta", "")
-    return {"ok": True, "status": record.get("status", "active"), "eta": eta, "previous_eta": previous, "eta_changed": bool(previous) and previous != eta}
+    zone = str(record.get("eta_timezone") or "America/New_York")
+    status = record.get("status", "active")
+    eta_time = _parse_local(eta, zone)
+    if eta_time is not None and eta_time < _local_now(zone) and str(status).lower() not in ("restored", "resolved", "closed", "none"):
+        # The estimate is in the past: never hand it to the model as a restoration time.
+        return {"ok": True, "status": status, "eta": "", "previous_eta": "", "eta_changed": False, "eta_passed": True,
+                "agent_action": _ETA_PASSED_ACTION}
+    return {"ok": True, "status": status, "eta": eta, "previous_eta": previous, "eta_changed": bool(previous) and previous != eta,
+            "eta_passed": False}

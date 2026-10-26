@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_stop_eligibility",
     "pythonCode": "tools/get_stop_eligibility/python_function/python_code.py",
-    "description": "Says whether the account can stop service online. An account in collections or with a shutoff\nnotice is not eligible and goes to a representative. Needs an identified caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, eligible and reason."
+    "description": "Says whether the account can stop service online. An account in collections or with a shutoff\nnotice is not eligible and goes to a representative. Needs an identified caller. Before calling\nthis tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, eligible and reason. The check is recorded for the session; create_service_order\n    with type stop requires it and refuses an ineligible account."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_stop_eligibility"

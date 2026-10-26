@@ -12,7 +12,8 @@ def check_active_service_at_address(address: str = "") -> dict:
         address: The standardized service address (REQUIRED).
 
     Returns:
-        dict with ok, found, active_service and occupied.
+        dict with ok, found, active_service and occupied. The result is recorded for the session;
+        create_service_order refuses a plain start at an address that is active and occupied (offer a transfer).
     """
     try:
         return _finish("check_active_service_at_address", _check_active_service_at_address_impl(address=address))
@@ -150,8 +151,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -212,7 +216,19 @@ def _in_tenant_region(document: dict) -> bool:
     return document.get("tenant") == _tenant()
 
 
+def _record_check(address: str, active: bool, occupied: bool) -> None:
+    """Remembers the active-service result for this address in the session record, so create_service_order can refuse a plain start there."""
+    try:
+        _commit([_set_write("wgl_sessions", _session_id(), {
+            "tenant": _tenant(), "active_address": _address_key(address), "active_service": active, "active_occupied": occupied,
+        })])
+    except Exception as err:
+        print(f"active service check not recorded: {err}")
+
+
 def _check_active_service_at_address_impl(address: str) -> dict:
     document = _get_doc("wgl_addresses", _address_key(address))
     served = document if _in_tenant_region(document) else {}
-    return {"ok": True, "found": bool(document), "active_service": bool(served.get("active_service")), "occupied": bool(served.get("occupied"))}
+    active, occupied = bool(served.get("active_service")), bool(served.get("occupied"))
+    _record_check(address, active, occupied)
+    return {"ok": True, "found": bool(document), "active_service": active, "occupied": occupied}

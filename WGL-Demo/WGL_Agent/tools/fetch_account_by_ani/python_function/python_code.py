@@ -14,7 +14,7 @@ def fetch_account_by_ani(ani: str = "", tenant: str = "") -> dict:
 
     Returns:
         dict with ok, found, auth_status, account_id, customer_name, customer_type, jurisdiction,
-        balance and due_date; found=false when the number is not linked to exactly one account.
+        balance and due_date; found=false when the number is not linked to exactly one account; account_locked true when the online account is locked (offer the unlock flow).
     """
     try:
         return _finish("fetch_account_by_ani", _fetch_account_by_ani_impl(ani=ani))
@@ -72,14 +72,27 @@ def _digits(text: str) -> str:
     return re.sub(r"\D", "", str(text))
 
 
+# Toll-free area codes can never be a customer's own number (800 and 888 numbers are test numbers in demos).
+_TOLL_FREE_AREA_CODES = ("800", "833", "844", "855", "866", "877", "888")
+
+
 def _e164(raw: str) -> str:
-    """Normalizes a phone number to +1XXXXXXXXXX; returns an empty string when it is not a US number."""
+    """Normalizes a phone number to +1XXXXXXXXXX; returns an empty string when it is not a valid NANP number.
+
+    Valid means ten digits (or eleven with a leading 1) where the area code and the exchange start with 2 to 9, neither is an
+    N11 service code, the area code is not toll free and the number is not one repeated digit.
+    """
     digits = _digits(raw)
-    if len(digits) == 10:
-        return f"+1{digits}"
     if len(digits) == 11 and digits.startswith("1"):
-        return f"+{digits}"
-    return ""
+        digits = digits[1:]
+    if len(digits) != 10:
+        return ""
+    area, exchange = digits[:3], digits[3:6]
+    if area[0] not in "23456789" or exchange[0] not in "23456789":
+        return ""
+    if area[1:] == "11" or exchange[1:] == "11" or area in _TOLL_FREE_AREA_CODES or len(set(digits)) == 1:
+        return ""
+    return f"+1{digits}"
 
 
 def _money(value) -> float:
@@ -234,8 +247,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -343,11 +359,19 @@ def _cis_unavailable(controls: dict) -> dict:
     )
 
 
+def _account_last4(customer: dict) -> str:
+    """The last four digits of the account number: the stored last4 field, else the end of the account number."""
+    stored = str(customer.get("account_number_last4") or "").strip()
+    if stored:
+        return stored
+    return "".join(char for char in str(customer.get("account_number") or "") if char.isdigit())[-4:]
+
+
 def _identity_patch(customer: dict) -> dict:
     """Maps a customer document to identity_ctx fields (account_number_last4 is the only number ever spoken)."""
     return {
         "account_id": customer["_id"],
-        "account_number_last4": customer.get("account_number_last4", ""),
+        "account_number_last4": _account_last4(customer),
         "customer_name": f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
         "service_address": customer.get("service_address", ""),
         "service_address_zip": customer.get("zip", ""),
@@ -380,15 +404,36 @@ def _account_patch(customer: dict) -> dict:
         patch["ebil_flag"] = bool(customer.get("ebil_flag"))
         patch["wna_amount"] = customer.get("wna_amount") if _wna_applies(customer) else None
         patch["wna_direction"] = customer.get("wna_direction") if _wna_applies(customer) else None
-    if customer.get("hhc_amount") is not None:
-        patch["hhc_amount"] = customer.get("hhc_amount")
+    else:
+        patch["ebil_flag"] = None  # a None removes the field, so a previous account's value never survives
+    # A None removes the field: a previous account's hhc_amount must not survive a second identification.
+    patch["hhc_amount"] = customer.get("hhc_amount")
     return patch
+
+
+_LOCKED_NOTE = (" Note: the caller's online account is locked (account_locked true), so account changes are refused until it is unlocked. "
+                "Offer the unlock flow when you next speak to the caller: verify the caller, then call unlock_account. If you are "
+                "transferring, the agent that takes over offers it.")
+
+
+def _reset_account_flags(customer: dict, previous_account: str) -> None:
+    """Sets every session variable derived from the account from the customer now identified, so a second identification
+    never keeps the previous account's flags (the verification flags are the ones get_auth_options would set)."""
+    _set_var("ssn_tax_flag", str(customer.get("ssn_tax_flag") or ""))
+    _set_var("pin_set", "true" if customer.get("pin_set") else "false")
+    _set_var("cc_on_file", "true" if customer.get("cc_on_file") else "false")
+    _set_var("auth_method_tier2", "")  # auth_status drops to Identified below, so no verification method is current
+    if previous_account != customer["_id"]:
+        _set_var("pin_entry_open", "false")
+        _set_var("pin_reset_done", "false")
 
 
 def _apply_identity(customer: dict, method: str, level: str = "Identified") -> dict:
     """Loads the matched customer into the session and returns the minimal model-facing summary."""
-    merge_ctx("identity_ctx", _identity_patch(customer))
+    previous_account = str(_object_var("identity_ctx").get("account_id") or "")
+    merge_ctx("identity_ctx", dict(_identity_patch(customer), candidate_accounts=[]))
     merge_ctx("account_ctx", _account_patch(customer))
+    _reset_account_flags(customer, previous_account)
     _set_var("auth_status", level)
     _set_var("auth_method_tier1", method)
     _set_var("identification_status", "Pass")
@@ -399,9 +444,10 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "language": _var("language", "EN"),
         "auth_status": level,
         "auth_method_tier1": method,
+        "auth_method_tier2": "",
     })])
     identity = _identity_patch(customer)
-    return {
+    result = {
         "ok": True,
         "found": True,
         "auth_status": level,
@@ -413,6 +459,10 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "balance": _money(customer.get("balance")),
         "due_date": customer.get("due_date", ""),
     }
+    if customer.get("account_locked"):
+        result["account_locked"] = True
+        result["agent_action"] = _LOCKED_NOTE.strip()
+    return result
 
 
 def _fetch_account_by_ani_impl(ani: str) -> dict:

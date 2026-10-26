@@ -4,7 +4,7 @@
   "displayName": "show_quick_actions",
   "widgetTool": {
     "name": "show_quick_actions",
-    "description": "Shows two to five tappable answer chips on chat: at a choice point (a disambiguation question, the verification method, the payment method, a yes or no confirmation) or as the next best actions after a major answer. Chat only; never on voice. Do not call it for the greeting itself: the opening callback adds its own page chips there. Each option is a short sentence the customer would say, because a tap sends the label back as their next message. No spoken pacing is needed. Call shape: name is always cx-show-quick-actions and all card fields go inside payload.",
+    "description": "Shows two or three tappable answer chips on chat: at a choice point (a disambiguation question, the verification method, the payment method, a yes or no confirmation) or as the next best actions after a major answer. Chat only; never on voice. Do not call it for the greeting itself: the opening callback adds its own page chips there. Each option is a short sentence the customer would say, because a tap sends the label back as their next message. No spoken pacing is needed. Call shape: name is always cx-show-quick-actions and all card fields go inside payload.",
     "widgetType": "CUSTOM",
     "parameters": {
       "type": "OBJECT",
@@ -19,7 +19,7 @@
           "properties": {
             "options": {
               "type": "ARRAY",
-              "description": "Two to five short answer labels, written the way the customer would say them.",
+              "description": "Two or three short answer labels, written the way the customer would say them.",
               "items": {
                 "type": "STRING"
               }

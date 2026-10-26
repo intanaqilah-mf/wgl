@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "validate_ssn_last4",
     "pythonCode": "tools/validate_ssn_last4/python_function/python_code.py",
-    "description": "Checks the last 4 digits of the customer\u0027s Social Security number against the account (only when\nget_auth_options returned ssn_tax_flag SSN). The digits are never repeated back or logged.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    ssn_last4: The four digits, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
+    "description": "Checks the last 4 digits of the customer\u0027s Social Security number against the account (only when\nget_auth_options returned ssn_tax_flag SSN). The digits are never repeated back or logged.\nBefore calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    ssn_last4: The four digits, spoken, keyed or typed (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, result (Pass or Fail), attempts_remaining and agent_action; on Pass\n    auth_status becomes Authenticated."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "validate_ssn_last4"

@@ -1,6 +1,7 @@
 import json
+import re
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def fetch_technician_slots(address: str = "", date: str = "", type: str = "", tenant: str = "") -> dict:
@@ -16,10 +17,13 @@ def fetch_technician_slots(address: str = "", date: str = "", type: str = "", te
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, slots (slot, date, window), slot_within_7_days and agent_action.
+        dict with ok, slots (slot, date, window), slot_within_7_days and agent_action. Windows that are
+        already booked are never offered; a start or stop is offered only from the earliest date that
+        meets the business-day notice (earliest_bookable_date, notice_business_days); when the slot data
+        names the ZIP codes it serves, only windows that serve the address are offered.
     """
     try:
-        return _finish("fetch_technician_slots", _fetch_technician_slots_impl(date=date, type=type))
+        return _finish("fetch_technician_slots", _fetch_technician_slots_impl(date=date, type=type, address=address))
     except Exception as err:
         return _unexpected_error("fetch_technician_slots", err)
 
@@ -201,8 +205,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -311,9 +318,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 # BR-GU-022: no appointments on weekends, public holidays or more than 30 days ahead.
@@ -355,23 +382,108 @@ def _slot_documents(slot_type: str) -> list:
     return _run_query("wgl_technician_slots", {"tenant": _tenant(), "type": slot_type}, 60)
 
 
-def _slot_options(slot_type: str, start_text: str, holidays: list) -> dict:
-    """Up to three valid slot alternatives from the start date on, weekdays only and within 30 days."""
+# Service notice rule (service agent guideline): start and stop need at least two business days notice; weekends and holidays do not count.
+_DEFAULT_NOTICE_BUSINESS_DAYS = 2
+_NOTICE_TYPES = ("start", "stop")
+
+
+def _notice_days() -> int:
+    """Business days of notice a start or stop needs: the tenant config value when it has one, else two."""
+    config = _tenant_config()
+    for key in ("service_notice_business_days", "notice_business_days", "booking_notice_business_days"):
+        try:
+            days = int(config.get(key))
+        except (TypeError, ValueError):
+            continue
+        if days >= 0:
+            return days
+    return _DEFAULT_NOTICE_BUSINESS_DAYS
+
+
+def _earliest_notice_day(holidays: list) -> date:
+    """The first date that satisfies the notice rule, counting weekdays that are not holidays from today."""
+    day = _today()
+    counted = 0
+    needed = _notice_days()
+    while counted < needed:
+        day += timedelta(days=1)
+        if day.weekday() < 5 and day.isoformat() not in holidays:
+            counted += 1
+    return day
+
+
+def _notice_error(kind: str, day_text: str, holidays: list) -> dict:
+    """Refuses a start or stop earlier than the notice rule allows and tells the agent to offer later slots."""
+    if kind not in _NOTICE_TYPES:
+        return {}
+    try:
+        day = date.fromisoformat(str(day_text)[:10])
+    except ValueError:
+        return {}
+    earliest = _earliest_notice_day(holidays)
+    if day >= earliest:
+        return {}
+    days = _notice_days()
+    return _error(
+        "business_rule",
+        f"Starting or stopping service needs at least {days} business days notice (weekends and holidays do not count), so "
+        f"the earliest date that can be booked is {earliest.isoformat()}. Explain this warmly, do not book the earlier date, "
+        f"call fetch_technician_slots with date {earliest.isoformat()} and offer those later slots.",
+        earliest_date=earliest.isoformat(),
+        notice_business_days=days,
+    )
+
+
+def _booked_windows(slot_type: str) -> set:
+    """(date, window) pairs of this type that an appointment already holds (wgl_slot_bookings)."""
+    rows = _run_query("wgl_slot_bookings", {"tenant": _tenant(), "type": slot_type, "status": "booked"}, 200)
+    return {(str(row.get("date", "")), str(row.get("window", ""))) for row in rows}
+
+
+def _zip_of(address: str) -> str:
+    """The ZIP code of the address asked about, else of the identified account's service address; empty when unknown."""
+    found = re.findall(r"\b(\d{5})(?:-\d{4})?\b", str(address or ""))
+    if found:
+        return found[-1]
+    return str(_object_var("identity_ctx").get("service_address_zip") or "").strip()[:5]
+
+
+def _serves_zip(zip_code: str, *sources: dict) -> bool:
+    """True unless the slot data names the ZIP codes it serves (zip or zips on the window or the day) and this ZIP is not one."""
+    if not zip_code:
+        return True
+    for source in sources:
+        listed = source.get("zips") if source.get("zips") is not None else source.get("zip")
+        if listed in (None, "", []):
+            continue
+        values = listed if isinstance(listed, list) else [listed]
+        return zip_code in {str(item).strip()[:5] for item in values}
+    return True
+
+
+def _slot_options(slot_type: str, start_text: str, holidays: list, address: str = "") -> dict:
+    """Up to three valid slot alternatives from the start date on, weekdays only, within 30 days, after the notice period,
+    not already booked and, when the slot data names the ZIP codes it serves, only those that serve the service address."""
     today = _today()
     options = []
+    booked = _booked_windows(slot_type)
+    zip_code = _zip_of(address)
+    earliest = _earliest_notice_day(holidays).isoformat() if slot_type in _NOTICE_TYPES else ""
     for day_doc in sorted(_slot_documents(slot_type), key=lambda item: str(item.get("date", ""))):
         day_text = str(day_doc.get("date", ""))
-        if day_text < start_text or _appointment_date_error(day_text, holidays):
+        if day_text < start_text or _appointment_date_error(day_text, holidays) or day_text < earliest:
             continue
         for window in day_doc.get("slots") or []:
+            label = window.get("window", "")
+            if (day_text, str(label)) in booked or not _serves_zip(zip_code, window, day_doc):
+                continue
             if len(options) < _MAX_SLOT_ALTERNATIVES:
-                label = window.get("window", "")
                 options.append({"slot": f"{day_text} {label}".strip(), "date": day_text, "window": label})
     near = any((date.fromisoformat(item["date"]) - today).days <= _NEAR_SLOT_DAYS for item in options)
     return {"slots": options, "slot_within_7_days": near}
 
 
-def _fetch_technician_slots_impl(date: str, type: str) -> dict:
+def _fetch_technician_slots_impl(date: str, type: str, address: str = "") -> dict:
     if type not in ("start", "stop", "reconnect", "meter_test"):
         return _validation_error("an appointment type of start, stop, reconnect or meter_test")
     start_text = date.strip()[:10] or _today().isoformat()
@@ -381,10 +493,21 @@ def _fetch_technician_slots_impl(date: str, type: str) -> dict:
         return note
     if _injected_failure("slots", _controls()):
         return {"ok": True, "slots": [], "slot_within_7_days": False, "agent_action": "No slots could be loaded. Offer an SMS notification when a slot opens; never say there is no availability."}
-    result = _slot_options(type, start_text, holidays)
+    result = _slot_options(type, start_text, holidays, address)
     result["ok"] = True
-    if not result["slot_within_7_days"]:
+    if type in _NOTICE_TYPES:
+        earliest = _earliest_notice_day(holidays).isoformat()
+        result["earliest_bookable_date"] = earliest
+        result["notice_business_days"] = _notice_days()
+    if not result["slots"] and note:
+        result["agent_action"] = note["agent_action"]
+    elif not result["slot_within_7_days"]:
         result["agent_action"] = "Nothing opens within seven days. Offer an SMS notification when an earlier slot opens; never say there is no availability."
     elif note:
         result["agent_action"] = note["agent_action"]
+    elif type in _NOTICE_TYPES and start_text < result["earliest_bookable_date"]:
+        result["agent_action"] = (
+            f"The customer asked for a date before the notice period ends. Say that at least {result['notice_business_days']} business days "
+            f"notice is needed, so these slots start on {result['earliest_bookable_date']}, and offer them."
+        )
     return result

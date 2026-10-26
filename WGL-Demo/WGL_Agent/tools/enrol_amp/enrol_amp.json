@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "enrol_amp",
     "pythonCode": "tools/enrol_amp/python_function/python_code.py",
-    "description": "Enrolls a Washington Gas DC customer with arrears in the Arrearage Management Program.\nRefuses until the Arrearage Management Program enrollment disclosure has been spoken. Needs an authenticated caller who\nagreed. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the authenticated account (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and confirmation_number."
+    "description": "Enrolls a Washington Gas DC customer with arrears in the Arrearage Management Program.\nRefuses until the Arrearage Management Program enrollment disclosure has been spoken. Needs an authenticated caller who\nagreed. Before calling this tool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok and confirmation_number (the same number again, with duplicate_suppressed true,\n    when the customer is already enrolled)."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "enrol_amp"

@@ -9,9 +9,9 @@ def create_portal_account(name: str = "", email: str = "", address: str = "", te
     while it runs.
 
     Args:
-        name: Customer's full name (REQUIRED).
+        name: Customer's full name (REQUIRED); it must match the name on the identified account.
         email: Email address for the portal account, confirmed by the customer (REQUIRED).
-        address: Service address on the account (REQUIRED).
+        address: Service address on the account (REQUIRED); it must match the address on the identified account.
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
@@ -173,8 +173,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -297,10 +300,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -315,16 +331,70 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
     return customer, {}
+
+
+def _tokens(text: str) -> set:
+    """Lowercase alphanumeric words of a name or address."""
+    return set(re.findall(r"[a-z0-9]+", str(text).lower()))
+
+
+# Words that name a kind of street, a direction or a unit, not the street itself: they never count as a street-name match.
+_GENERIC_ADDRESS_WORDS = {
+    "street", "st", "avenue", "ave", "road", "rd", "drive", "dr", "court", "ct", "lane", "ln", "place", "pl", "way", "blvd",
+    "boulevard", "circle", "cir", "terrace", "ter", "parkway", "pkwy", "highway", "hwy", "apt", "apartment", "unit", "suite", "ste",
+    "north", "south", "east", "west", "n", "s", "e", "w", "ne", "nw", "se", "sw",
+}
+
+
+def _address_matches(given: str, stored: str, require_number: bool = True) -> bool:
+    """Fuzzy address match: the house number AND at least one distinctive street-name word must match.
+
+    Generic words (street, avenue, north, apt ...) are ignored, so "100 Main Street" does not match "100 Oak Street" and a
+    bare "main" does not match anything. Every number the caller gave must appear in the stored address. With
+    require_number False (picking one of the accounts of an already matched phone number) the house number may be left out.
+    """
+    given_tokens, stored_tokens = _tokens(given), _tokens(stored)
+    street_part = str(stored).split(",")[0]
+    street_tokens = _tokens(street_part)
+    numbers = {token for token in given_tokens if token.isdigit()}
+    words = {token for token in given_tokens - numbers if token not in _GENERIC_ADDRESS_WORDS}
+    house = next((token for token in re.findall(r"[a-z0-9]+", street_part.lower()) if token.isdigit()), "")
+    if not numbers <= stored_tokens or not words & street_tokens:
+        return False
+    if require_number and (not numbers or (house and house not in numbers)):
+        return False
+    return True
+
+
+def _name_matches(given: str, customer: dict) -> bool:
+    """True when the supplied full name holds the first and the last name on the record (a business name for a commercial
+    account); an account with no name on file leaves the address as the only check."""
+    given_tokens = _tokens(given)
+    first, last = _tokens(customer.get("first_name", "")), _tokens(customer.get("last_name", ""))
+    if first and last:
+        first_word = str(customer.get("first_name", "")).strip().split()[0].lower()
+        return bool(_tokens(first_word) & given_tokens) and last <= given_tokens
+    business = _tokens(customer.get("business_name", ""))
+    return not business or bool(business & given_tokens)
+
+
+def _locked_block(customer: dict) -> dict:
+    """Refuses a change while the online account is locked: the caller must unlock it first (unlock_account)."""
+    if not customer.get("account_locked"):
+        return {}
+    return _error(
+        "business_rule",
+        "The online account is locked, so this change is refused until it is unlocked. Offer to unlock it now: the caller must be "
+        "verified, then call unlock_account, then repeat the change.",
+        account_locked=True,
+    )
 
 
 def _create_portal_account_impl(name: str, email: str, address: str) -> dict:
@@ -335,6 +405,15 @@ def _create_portal_account_impl(name: str, email: str, address: str) -> dict:
         return _validation_error("the full name and service address")
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email.strip()):
         return _validation_error("a valid email address")
+    if not (_name_matches(name, customer) and _address_matches(address, customer.get("service_address", ""))):
+        return _error(
+            "business_rule",
+            "The name and service address must match the account on file. Ask the caller to say both again exactly as they appear "
+            "on the bill. Do not say which one did not match, do not read the record back and do not create the account.",
+        )
+    locked = _locked_block(customer)
+    if locked:
+        return locked
     if customer.get("portal_account_exists"):
         return _rule_error("an online account already exists", "reset the password instead")
     _commit([

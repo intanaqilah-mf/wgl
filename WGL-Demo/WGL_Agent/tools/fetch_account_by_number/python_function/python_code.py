@@ -14,7 +14,7 @@ def fetch_account_by_number(account_num: str = "", tenant: str = "") -> dict:
 
     Returns:
         dict with ok, found and, on one match, the Identified account summary; attempts_remaining
-        on a miss.
+        on a miss; account_locked true when the online account is locked (offer the unlock flow).
     """
     try:
         return _finish("fetch_account_by_number", _fetch_account_by_number_impl(account_num=account_num))
@@ -224,8 +224,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _error(error_class: str, agent_action: str, **extra) -> dict:
@@ -333,11 +336,19 @@ def _cis_unavailable(controls: dict) -> dict:
     )
 
 
+def _account_last4(customer: dict) -> str:
+    """The last four digits of the account number: the stored last4 field, else the end of the account number."""
+    stored = str(customer.get("account_number_last4") or "").strip()
+    if stored:
+        return stored
+    return "".join(char for char in str(customer.get("account_number") or "") if char.isdigit())[-4:]
+
+
 def _identity_patch(customer: dict) -> dict:
     """Maps a customer document to identity_ctx fields (account_number_last4 is the only number ever spoken)."""
     return {
         "account_id": customer["_id"],
-        "account_number_last4": customer.get("account_number_last4", ""),
+        "account_number_last4": _account_last4(customer),
         "customer_name": f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip(),
         "service_address": customer.get("service_address", ""),
         "service_address_zip": customer.get("zip", ""),
@@ -370,8 +381,10 @@ def _account_patch(customer: dict) -> dict:
         patch["ebil_flag"] = bool(customer.get("ebil_flag"))
         patch["wna_amount"] = customer.get("wna_amount") if _wna_applies(customer) else None
         patch["wna_direction"] = customer.get("wna_direction") if _wna_applies(customer) else None
-    if customer.get("hhc_amount") is not None:
-        patch["hhc_amount"] = customer.get("hhc_amount")
+    else:
+        patch["ebil_flag"] = None  # a None removes the field, so a previous account's value never survives
+    # A None removes the field: a previous account's hhc_amount must not survive a second identification.
+    patch["hhc_amount"] = customer.get("hhc_amount")
     return patch
 
 
@@ -387,13 +400,14 @@ _CHANGE_INTENT = re.compile(
     r"set ?up|submit|dispute",
     re.IGNORECASE,
 )
+_STATUS_PHRASE = re.compile(r"payment (?:status|history)|status of (?:my|a|the) payment|(?:my|a|the) payment status", re.IGNORECASE)
 _SPECIALISTS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent")
 # Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
 _INTENT_ROUTES = (
-    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
-    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
-    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
-    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off (?:notice|date|warning)|shutoff|disconnect(?:ion)? (?:notice|date|warning)|(?:going|about) to (?:be )?(?:shut|cut|disconnect)|cut off|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|\bmov(?:e|ing)\b|reconnect|shut ?off (?:my|the) gas|turn off (?:my|the) gas|disconnect (?:my|the) (?:gas|service)|consumo|cita|medidor", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement|factura|saldo|pagar|pago", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint|apag[o\u00f3]n|interrupci[o\u00f3]n", re.IGNORECASE)),
 )
 
 
@@ -417,19 +431,39 @@ def _identified_action() -> str:
     """What the model does next: transfer back for a request that only reads information (or none saved), else verify."""
     saved = _object_var("saved_task_state")
     intent = str(saved.get("pending_intent", "")) if saved.get("saved") else ""
-    if intent and not (_READ_ONLY_INTENT.search(intent) and not _CHANGE_INTENT.search(intent)):
+    read_only = bool(_STATUS_PHRASE.search(intent)) or bool(_READ_ONLY_INTENT.search(intent) and not _CHANGE_INTENT.search(intent))
+    if intent and not read_only:
         return ("Identification passed. The saved request changes something or is unclear, so verify the caller next: "
                 "call get_auth_options and follow the verification steps.")
     target = _return_target(intent)
     _set_var("_return_to_agent", "")
-    return (f"Identification passed. Do not answer the caller's question yourself, do not ask for verification and do not greet. "
-            f"Call transfer_to_agent with agent {target} now and write nothing else; the agent that takes over continues the request.")
+    return (f"Identification passed. Your next output must be only the function call transfer_to_agent with agent {target}: call transfer_to_agent with agent {target} now. "
+            "Write no text at all: do not greet, do not answer, do not say you are transferring and do not ask for verification; the agent that takes over continues the request.")
+
+
+_LOCKED_NOTE = (" Note: the caller's online account is locked (account_locked true), so account changes are refused until it is unlocked. "
+                "Offer the unlock flow when you next speak to the caller: verify the caller, then call unlock_account. If you are "
+                "transferring, the agent that takes over offers it.")
+
+
+def _reset_account_flags(customer: dict, previous_account: str) -> None:
+    """Sets every session variable derived from the account from the customer now identified, so a second identification
+    never keeps the previous account's flags (the verification flags are the ones get_auth_options would set)."""
+    _set_var("ssn_tax_flag", str(customer.get("ssn_tax_flag") or ""))
+    _set_var("pin_set", "true" if customer.get("pin_set") else "false")
+    _set_var("cc_on_file", "true" if customer.get("cc_on_file") else "false")
+    _set_var("auth_method_tier2", "")  # auth_status drops to Identified below, so no verification method is current
+    if previous_account != customer["_id"]:
+        _set_var("pin_entry_open", "false")
+        _set_var("pin_reset_done", "false")
 
 
 def _apply_identity(customer: dict, method: str, level: str = "Identified") -> dict:
     """Loads the matched customer into the session and returns the minimal model-facing summary."""
-    merge_ctx("identity_ctx", _identity_patch(customer))
+    previous_account = str(_object_var("identity_ctx").get("account_id") or "")
+    merge_ctx("identity_ctx", dict(_identity_patch(customer), candidate_accounts=[]))
     merge_ctx("account_ctx", _account_patch(customer))
+    _reset_account_flags(customer, previous_account)
     _set_var("auth_status", level)
     _set_var("auth_method_tier1", method)
     _set_var("identification_status", "Pass")
@@ -441,6 +475,7 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "language": _var("language", "EN"),
         "auth_status": level,
         "auth_method_tier1": method,
+        "auth_method_tier2": "",
     })])
     identity = _identity_patch(customer)
     result = {
@@ -455,6 +490,9 @@ def _apply_identity(customer: dict, method: str, level: str = "Identified") -> d
         "balance": _money(customer.get("balance")),
         "due_date": customer.get("due_date", ""),
     }
+    if customer.get("account_locked"):
+        result["account_locked"] = True
+        action += _LOCKED_NOTE
     result["agent_action"] = action
     return result
 

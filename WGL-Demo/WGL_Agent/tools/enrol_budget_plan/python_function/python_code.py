@@ -8,8 +8,11 @@ def enrol_budget_plan(account_id: str = "", monthly_amount: float = 0.0, tenant:
     conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the authenticated account (REQUIRED).
-        monthly_amount: Monthly installment in dollars the customer agreed to (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
+        monthly_amount: Monthly installment in dollars the customer agreed to (REQUIRED). It must be
+            a plausible amount: between half and twice the account's average bill (from the billing
+            history), or between 5 and 2000 when there is no history; otherwise it is refused with the
+            allowed range, which the agent offers instead.
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
@@ -150,6 +153,39 @@ def _check_collection(collection: str) -> None:
         raise ValueError("collection is outside the wgl_ namespace")
 
 
+_DEFAULT_QUERY_LIMIT = 50
+
+
+def _as_list(response) -> list:
+    """Normalizes a toolset response: a list, or a dict that wraps a list under one or more layers."""
+    if isinstance(response, list):
+        return response
+    if isinstance(response, dict):
+        for key in ("response", "result", "results", "output", "items"):
+            inner = response.get(key)
+            if isinstance(inner, (list, dict)):
+                unwrapped = _as_list(inner)
+                if unwrapped:
+                    return unwrapped
+        return [response] if ("document" in response or "fields" in response) else []
+    return []
+
+
+def _field_filter(field: str, value) -> dict:
+    """Builds one EQUAL field filter."""
+    return {"fieldFilter": {"field": {"fieldPath": field}, "op": "EQUAL", "value": _to_value(value)}}
+
+
+def _run_query(collection: str, filters: dict, limit: int = _DEFAULT_QUERY_LIMIT) -> list:
+    """Runs an EQUAL-only query (no orderBy, so no composite index) and returns plain documents."""
+    _check_collection(collection)
+    clauses = [_field_filter(field, value) for field, value in filters.items()]
+    where = clauses[0] if len(clauses) == 1 else {"compositeFilter": {"op": "AND", "filters": clauses}}
+    query = {"from": [{"collectionId": collection}], "where": where, "limit": limit}
+    response = _payload(tools.wgl_firestore_runQuery({"structuredQuery": query}))
+    return [_unwrap_doc(item["document"]) for item in _as_list(response) if isinstance(item, dict) and "document" in item]
+
+
 def _get_doc(collection: str, doc_id: str) -> dict:
     """Reads one document; returns an empty dict when it does not exist."""
     _check_collection(collection)
@@ -185,8 +221,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -337,10 +376,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -355,16 +407,59 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
     return customer, {}
+
+
+# A Budget Plan amount must be plausible: within a band around the account's average bill, else between these limits.
+_BUDGET_MIN_AMOUNT = 5.0
+_BUDGET_MAX_AMOUNT = 2000.0
+_BUDGET_BAND_LOW = 0.5
+_BUDGET_BAND_HIGH = 2.0
+
+
+def _average_bill(account_id: str) -> float:
+    """Average billed amount over the account's recent billing periods; 0.0 when there is no usable history."""
+    rows = _run_query("wgl_billing_periods", {"account_id": account_id}, 60)
+    amounts = []
+    for row in sorted(rows, key=lambda item: str(item.get("end", "")), reverse=True)[:12]:
+        try:
+            value = float(row.get("amount"))
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            amounts.append(value)
+    return _money(sum(amounts) / len(amounts)) if amounts else 0.0
+
+
+def _budget_amount_error(amount: float, average: float) -> dict:
+    """Refuses a monthly amount outside the plausible band and gives the agent the real range to offer."""
+    if average > 0:
+        low = max(_BUDGET_MIN_AMOUNT, _money(average * _BUDGET_BAND_LOW))
+        high = max(low, min(_BUDGET_MAX_AMOUNT, _money(average * _BUDGET_BAND_HIGH)))
+    else:
+        low, high = _BUDGET_MIN_AMOUNT, _BUDGET_MAX_AMOUNT
+    if low <= amount <= high:
+        return {}
+    extra = {"min_amount": low, "max_amount": high}
+    suggestion = f" Suggest about ${average:,.2f}, the customer's average bill." if average > 0 else ""
+    if average > 0:
+        extra["average_bill"] = average
+        extra["suggested_monthly_amount"] = average
+    return _error(
+        "business_rule",
+        f"That monthly amount does not fit this account, so no Budget Plan was set up. Say kindly that a monthly amount between "
+        f"${low:,.2f} and ${high:,.2f} fits the account's billing history, and ask the customer to confirm or choose an amount in that range."
+        + suggestion,
+        **extra,
+    )
 
 
 def _enrol_budget_plan_impl(account_id: str, monthly_amount: float) -> dict:
@@ -374,11 +469,17 @@ def _enrol_budget_plan_impl(account_id: str, monthly_amount: float) -> dict:
     customer, error = _load_customer(account_id, "Authenticated")
     if error:
         return error
-    amount = _money(monthly_amount)
-    if amount <= 0:
+    try:
+        amount = _money(monthly_amount)
+    except (TypeError, ValueError):
+        return _validation_error("a monthly amount above zero")
+    if amount != amount or amount <= 0 or amount == float("inf"):
         return _validation_error("a monthly amount above zero")
     if customer.get("budget_plan_enrolled"):
         return _rule_error("a Budget Plan is already active", "keep the current plan or ask a representative to change it")
+    problem = _budget_amount_error(amount, _average_bill(customer["_id"]))
+    if problem:
+        return problem
     confirmation = _reference_number("confirmations")
     _commit([_set_write("wgl_customers", customer["_id"], {"budget_plan_enrolled": True, "budget_plan_amount": amount}, "must")])
     merge_ctx("account_ctx", {"budget_plan_enrolled": True})

@@ -1,6 +1,7 @@
 import json
+import re
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def commit_appointment_change(
@@ -24,7 +25,10 @@ def commit_appointment_change(
 
     Returns:
         dict with ok, changed, confirmation_number, status and slot; needs_confirmation is true
-        when a second confirmation is required.
+        when a second confirmation is required. A cancelled, completed or past appointment cannot be
+        changed again. A rescheduled start or stop must meet the business-day notice and a slot that is
+        already booked is refused; a cancel or reschedule frees the old slot. Making the same change
+        twice in one session returns the first confirmation with duplicate_suppressed true.
     """
     try:
         return _finish("commit_appointment_change", _commit_appointment_change_impl(appt_id=appt_id, action=action, slot=slot, same_day_confirmed=same_day_confirmed))
@@ -224,8 +228,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -382,9 +389,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 # auth_status ladder (PRD s10.1): write tools need Authenticated, account reads need Identified.
@@ -398,10 +425,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -416,12 +456,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -466,6 +505,110 @@ def _split_slot(slot: str) -> tuple:
     return day, window.strip()
 
 
+# Service notice rule (service agent guideline): start and stop need at least two business days notice; weekends and holidays do not count.
+_DEFAULT_NOTICE_BUSINESS_DAYS = 2
+_NOTICE_TYPES = ("start", "stop")
+
+
+def _notice_days() -> int:
+    """Business days of notice a start or stop needs: the tenant config value when it has one, else two."""
+    config = _tenant_config()
+    for key in ("service_notice_business_days", "notice_business_days", "booking_notice_business_days"):
+        try:
+            days = int(config.get(key))
+        except (TypeError, ValueError):
+            continue
+        if days >= 0:
+            return days
+    return _DEFAULT_NOTICE_BUSINESS_DAYS
+
+
+def _earliest_notice_day(holidays: list) -> date:
+    """The first date that satisfies the notice rule, counting weekdays that are not holidays from today."""
+    day = _today()
+    counted = 0
+    needed = _notice_days()
+    while counted < needed:
+        day += timedelta(days=1)
+        if day.weekday() < 5 and day.isoformat() not in holidays:
+            counted += 1
+    return day
+
+
+def _notice_error(kind: str, day_text: str, holidays: list) -> dict:
+    """Refuses a start or stop earlier than the notice rule allows and tells the agent to offer later slots."""
+    if kind not in _NOTICE_TYPES:
+        return {}
+    try:
+        day = date.fromisoformat(str(day_text)[:10])
+    except ValueError:
+        return {}
+    earliest = _earliest_notice_day(holidays)
+    if day >= earliest:
+        return {}
+    days = _notice_days()
+    return _error(
+        "business_rule",
+        f"Starting or stopping service needs at least {days} business days notice (weekends and holidays do not count), so "
+        f"the earliest date that can be booked is {earliest.isoformat()}. Explain this warmly, do not book the earlier date, "
+        f"call fetch_technician_slots with date {earliest.isoformat()} and offer those later slots.",
+        earliest_date=earliest.isoformat(),
+        notice_business_days=days,
+    )
+
+
+# A technician slot window serves one appointment: wgl_slot_bookings holds one flat row per booked window (status booked or released).
+def _booking_id(slot_type: str, day: str, window: str) -> str:
+    """Document id of the booking row that consumes one technician slot window."""
+    return "_".join(re.findall(r"[A-Za-z0-9]+", f"{_tenant()}_{slot_type}_{day}_{window}"))
+
+
+def _slot_booking(slot_type: str, day: str, window: str) -> dict:
+    """The booking row of one slot window; empty when it was never booked."""
+    return _get_doc("wgl_slot_bookings", _booking_id(slot_type, day, window))
+
+
+def _slot_taken(slot_type: str, day: str, window: str) -> bool:
+    """True when the slot window is already booked by an appointment."""
+    return _slot_booking(slot_type, day, window).get("status") == "booked"
+
+
+def _booking_write(slot_type: str, day: str, window: str, appointment_id: str, account_id: str) -> dict:
+    """The write that books one slot window for an appointment (a released window is booked again)."""
+    existing = _slot_booking(slot_type, day, window)
+    fields = {
+        "tenant": _tenant(), "type": slot_type, "date": day, "window": window, "status": "booked",
+        "appointment_id": appointment_id, "account_id": account_id, "session_id": _session_id(),
+    }
+    return _set_write("wgl_slot_bookings", _booking_id(slot_type, day, window), fields, "must" if existing else "new")
+
+
+def _release_write(appointment: dict) -> list:
+    """The write that frees the technician slot window this appointment holds (none when it holds no booking row)."""
+    slot_type = appointment.get("type", "")
+    day, window = _split_slot(appointment.get("slot", ""))
+    booking = _slot_booking(slot_type, day, window) if day and window else {}
+    if booking.get("status") == "booked" and booking.get("appointment_id") == appointment["_id"]:
+        return [_set_write("wgl_slot_bookings", _booking_id(slot_type, day, window), {"status": "released"}, "must")]
+    return []
+
+
+def _repeat_result(appointment: dict, action: str, new_slot: str = "") -> dict:
+    """The first result again when the same change was already made earlier in this session (a double submit); empty otherwise."""
+    if appointment.get("last_change_session") != _session_id() or appointment.get("last_change_action") != action:
+        return {}
+    if action == "cancel" and appointment.get("status") != "cancelled":
+        return {}
+    if action == "reschedule" and (appointment.get("status") == "cancelled" or appointment.get("slot") != new_slot):
+        return {}
+    return {
+        "ok": True, "changed": True, "duplicate_suppressed": True, "confirmation_number": appointment.get("last_change_confirmation", ""),
+        "status": appointment.get("status", ""), "slot": appointment.get("slot", ""),
+        "agent_action": "This change was already made earlier in this conversation and nothing new was changed. Give the same "
+                        "confirmation number again; never say it was done twice.",
+    }
+
+
 def _own_appointment(appt_id: str, customer: dict) -> dict:
     """Loads an appointment and checks it belongs to the account being served."""
     appointment = _get_doc("wgl_appointments", appt_id.strip())
@@ -493,24 +636,44 @@ def _commit_appointment_change_impl(appt_id: str, action: str, slot: str, same_d
     appointment = _own_appointment(appt_id, customer)
     if not appointment:
         return _rule_error("that appointment was not found on this account", "check the active appointments")
+    repeated = _repeat_result(appointment, action, " ".join(part for part in _split_slot(slot) if part))
+    if repeated:
+        return repeated
+    if appointment.get("status") in ("cancelled", "completed"):
+        return _rule_error(f"that appointment is already {appointment['status']} and cannot be changed again", "check the active appointments or book a new one")
+    if str(appointment.get("slot", ""))[:10] and str(appointment.get("slot", ""))[:10] < _today().isoformat():
+        return _rule_error("that appointment date has already passed and it cannot be changed", "check the active appointments or book a new one")
     if appointment.get("status") == "en_route":
         return _rule_error("a technician is already on the way, so the appointment cannot be changed", "leave a note for the technician")
+    release = []
     if action == "cancel":
         if appointment.get("slot", "")[:10] == _today().isoformat() and not same_day_confirmed:
             return {"ok": True, "changed": False, "needs_confirmation": True,
                     "agent_action": "Same-day cancellation: ask the customer to confirm twice, then call this tool again with same_day_confirmed true."}
         fields = {"status": "cancelled"}
+        release = _release_write(appointment)
     else:
         day, window = _split_slot(slot)
-        problem = _appointment_date_error(day, _holidays())
+        holidays = _holidays()
+        problem = _appointment_date_error(day, holidays)
+        if problem:
+            return problem
+        problem = _notice_error(appointment.get("type", ""), day, holidays)
         if problem:
             return problem
         if not window or not _slot_is_open(appointment.get("type", ""), day, window):
             return _rule_error("that time slot is not available", "choose another slot")
+        if appointment.get("slot") == f"{day} {window}":
+            return _rule_error("the appointment is already booked for that slot", "choose a different slot or keep the appointment as it is")
+        if _slot_taken(appointment.get("type", ""), day, window):
+            return _rule_error("that time slot has just been taken", "choose another slot")
         fields = {"slot": f"{day} {window}", "status": "scheduled"}
+        release = _release_write(appointment) + [_booking_write(appointment.get("type", ""), day, window, appointment["_id"], customer["_id"])]
     reference = _reference_number("confirmations")
+    fields.update({"last_change_session": _session_id(), "last_change_action": action, "last_change_confirmation": reference})
     _commit([
         _set_write("wgl_appointments", appointment["_id"], fields, "must"),
+        *release,
         _set_write("wgl_notifications", _new_id(), {"account_id": customer["_id"], "tenant": _tenant(), "type": "appointment_change", "channel": "sms", "reference": reference}, "new"),
     ])
     final_slot = fields.get("slot", appointment.get("slot", ""))

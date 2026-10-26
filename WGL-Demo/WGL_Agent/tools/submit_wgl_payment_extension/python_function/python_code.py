@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 def submit_wgl_payment_extension(account_id: str = "", new_due_date: str = "", tenant: str = "") -> dict:
@@ -9,12 +9,13 @@ def submit_wgl_payment_extension(account_id: str = "", new_due_date: str = "", t
     conversational pacing phrase while it runs.
 
     Args:
-        account_id: Account id of the authenticated account (REQUIRED).
+        account_id: Leave empty: the identified account is used automatically (any other id is refused).
         new_due_date: New due date, YYYY-MM-DD (REQUIRED).
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, confirmation_number and new_due_date.
+        dict with ok, confirmation_number and new_due_date. When the account has a shutoff date earlier
+        than the new due date, the shutoff date moves to the new due date as well.
     """
     try:
         return _finish("submit_wgl_payment_extension", _submit_wgl_payment_extension_impl(account_id=account_id, new_due_date=new_due_date))
@@ -181,8 +182,11 @@ def _set_write(collection: str, doc_id: str, fields: dict, exists: str = "any") 
 
 
 def _commit(writes: list) -> dict:
-    """Commits all writes atomically."""
-    return _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    """Commits all writes atomically; raises when Firestore reports an error so a failed write is never reported as success."""
+    response = _first_dict(_payload(tools.wgl_firestore_commit({"writes": writes})))
+    if isinstance(response, dict) and response.get("error"):
+        raise RuntimeError(f"Firestore commit failed: {str(response.get('error'))[:200]}")
+    return response
 
 
 def _next_sequence(counter_id: str) -> int:
@@ -334,9 +338,29 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
 def _today() -> date:
-    """Today's date on the demo clock."""
-    return _now().date()
+    """Today's date on the demo clock; the real clock is read in US Eastern time (the app's time zone), not UTC, so after about
+    8 pm Eastern today is still today."""
+    override = _object_var("demo_ctx").get("demo_clock_override")
+    if override:
+        try:
+            return date.fromisoformat(str(override)[:10])
+        except ValueError:
+            pass
+    moment = _now().astimezone(timezone.utc)
+    return (moment + timedelta(hours=_eastern_offset_hours(moment))).date()
 
 
 # auth_status ladder (PRD s10.1): write tools need Authenticated, account reads need Identified.
@@ -350,10 +374,23 @@ def _auth_gate(required: str) -> dict:
         return {}
     return _error(
         "business_rule",
-        f"auth_status is {current} but {required} is needed. Save the pending task in saved_task_state and "
-        "transfer silently to auth_agent; never tell the customer about internal routing.",
+        f"This caller is not verified yet (auth_status is {current}, {required} is needed). Your next output must be only the function call "
+        "transfer_to_agent with agent auth_agent: write no text and call no other tool, because the request is saved and the caller returns here after verification. "
+        "Never tell the caller about internal routing or say the payment cannot be processed.",
         auth_required=required,
     )
+
+
+_PLACEHOLDER_IDS = ("", "none", "null", "n/a", "na", "unknown", "undefined", "account_id", "0")
+
+
+def _resolve_account_id(account_id: str = "") -> str:
+    """The account the caller was identified as. A blank or placeholder id means that account; a different real id returns ''."""
+    identified = str(_object_var("identity_ctx").get("account_id", "") or "")
+    given = str(account_id or "").strip()
+    if given.lower() in _PLACEHOLDER_IDS:
+        return identified
+    return given if given == identified else ""
 
 
 def _load_customer(account_id: str, required: str) -> tuple:
@@ -368,12 +405,11 @@ def _load_customer(account_id: str, required: str) -> tuple:
     denied = _auth_gate(required)
     if denied:
         return {}, denied
-    known = _object_var("identity_ctx").get("account_id", "")
-    resolved = str(account_id).strip() or known
+    resolved = _resolve_account_id(account_id)
     if not resolved:
-        return {}, _validation_error("account_id")
-    if known and resolved != known:
-        return {}, _rule_error("only the account being served in this conversation can be used", "continue with that account")
+        if str(account_id or "").strip().lower() in _PLACEHOLDER_IDS:
+            return {}, _validation_error("account_id")
+        return {}, _error("business_rule", "Only the identified account can be used. Leave account_id empty: it is filled in automatically.")
     customer = _get_doc("wgl_customers", resolved)
     if not customer or customer.get("tenant") != _tenant():
         return {}, _error("business_rule", "No matching account was found. Ask the customer to confirm the details and try again.")
@@ -401,18 +437,32 @@ def _submit_wgl_payment_extension_impl(account_id: str, new_due_date: str) -> di
         return error
     ext_state = _extension_state(customer)
     if not ext_state["eligible"]:
-        return _rule_error("only one payment extension is allowed per billing cycle", "talk about a payment arrangement instead")
+        if ext_state["reason"] == "already_used_this_cycle":
+            return _rule_error("only one payment extension is allowed per billing cycle", "talk about a payment arrangement instead")
+        return _rule_error("a payment extension is not available on this account right now", "talk about a payment arrangement instead")
     try:
         day = date.fromisoformat(new_due_date.strip()[:10])
     except ValueError:
         return _validation_error("the new due date in year-month-day form")
-    if day <= _today() or day.isoformat() > ext_state["max_new_due_date"]:
-        return _rule_error(f"the new due date must be after today and no later than {ext_state['max_new_due_date']}", "choose a date in that window")
+    maximum = str(ext_state["max_new_due_date"] or "")
+    if not maximum:
+        return _rule_error("no payment extension window is on file for this account", "talk about a payment arrangement instead")
+    if day <= _today() or day.isoformat() > maximum:
+        return _rule_error(f"the new due date must be after today and no later than {maximum}", "choose a date in that window")
     reference = _reference_number("confirmations")
+    customer_fields = {"due_date": day.isoformat()}
+    shutoff = str(customer.get("shutoff_date") or "")
+    moves_shutoff = bool(shutoff) and shutoff[:10] < day.isoformat()
+    if moves_shutoff:
+        # The extension exists to stop a shutoff: the shutoff date cannot stay earlier than the date the customer was given.
+        customer_fields["shutoff_date"] = day.isoformat()
     _commit([
         _set_write("wgl_extensions", customer["_id"], {"used_this_cycle": True}, "must"),
-        _set_write("wgl_extensions", reference, {"kind": "submission", "account_id": customer["_id"], "tenant": _tenant(), "new_due_date": day.isoformat()}, "new"),
-        _set_write("wgl_customers", customer["_id"], {"due_date": day.isoformat()}, "must"),
+        _set_write("wgl_extensions", reference, {"kind": "submission", "account_id": customer["_id"], "tenant": _tenant(), "new_due_date": day.isoformat(), "previous_shutoff_date": shutoff if moves_shutoff else ""}, "new"),
+        _set_write("wgl_customers", customer["_id"], customer_fields, "must"),
     ])
-    merge_ctx("account_ctx", {"due_date": day.isoformat()})
+    ctx_patch = {"due_date": day.isoformat()}
+    if moves_shutoff:
+        ctx_patch["shutoff_date"] = day.isoformat()
+    merge_ctx("account_ctx", ctx_patch)
     return {"ok": True, "confirmation_number": reference, "new_due_date": day.isoformat()}

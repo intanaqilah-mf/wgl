@@ -40,8 +40,10 @@ def set_session_state(
     if _action_trigger:
         if _action_trigger not in _ALLOWED_TRIGGERS:
             return _validation_error("an action trigger of emergency, live_agent_handoff, replay_consent or return_to_origin")
-        if _action_trigger == "live_agent_handoff" and (_escalation_reason or "user_requested_agent") == "user_requested_agent" and not _person_requested():
+        if _action_trigger == "live_agent_handoff" and (_escalation_reason or "user_requested_agent") == "user_requested_agent" and _escalation_topic not in _SPECIALIST_QUEUES and not _person_requested():
             return _error("business_rule", _no_handoff_action())
+        if _action_trigger == "emergency" and not _hazard_reported():
+            return _error("business_rule", _NO_HAZARD)
         updates["_action_trigger"] = _action_trigger
         if _action_trigger == "emergency":
             updates["emergency_detected"] = "true"
@@ -135,17 +137,20 @@ _PERSON_REQUEST = re.compile(
     re.IGNORECASE,
 )
 _SPECIALIST_TOPIC = re.compile(
-    r"medical|life support|oxygen|ventilator|dialysis|death|died|passed away|estate|funeral|bereave|bankrupt|"
-    r"name change|change (?:the |my )?name|regulat|commission|attorney general|"
-    r"m[eé]dic|fallec|muri[oó]|quiebra|cambio de nombre|regulador",
+    r"medical|life[\s-]?support|oxygen|ventilator|dialysis|death|died|passed away|passed on|(?:husband|wife|father|mother|son|daughter|spouse|partner|dad|mom)\b[^.!?]{0,25}\bpassed\b|deceased|late (?:husband|wife|father|mother)|"
+    r"lost (?:my )?(?:husband|wife|father|mother|son|daughter)|estate|funeral|bereave|bankrupt|"
+    r"name change|change (?:the |my )?name|(?:update|change) the name|names? on (?:the |my )?account|regulat|commission|\bpsc\b|attorney general|"
+    r"m[e\u00e9]dic|fallec|muri[o\u00f3]|quiebra|cambio de nombre|regulador",
     re.IGNORECASE,
 )
+_SPECIALIST_QUEUES = ("medical", "bereavement", "regulatory")
+_AFFIRMATION = re.compile(r"^\W*(?:yes|yeah|yep|sure|ok|okay|please|absolutely|definitely|that would|that sounds|go ahead|do that|i would like that)\b", re.IGNORECASE)
 # Where a request belongs, checked in this order: "usage history" goes to service and "bill history" to billing.
 _INTENT_ROUTES = (
-    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off|disconnect|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
-    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|move|reconnect", re.IGNORECASE)),
-    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement", re.IGNORECASE)),
-    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint", re.IGNORECASE)),
+    ("hardship_agent", re.compile(r"can'?t pay|cannot pay|unable to pay|shut ?off (?:notice|date|warning)|shutoff|disconnect(?:ion)? (?:notice|date|warning)|(?:going|about) to (?:be )?(?:shut|cut|disconnect)|cut off|hardship|assistance|arrear|past due|payment plan|payment arrangement", re.IGNORECASE)),
+    ("service_agent", re.compile(r"usage|therm|how much gas|gas (?:use|used)|(?:did|do) i use|appointment|meter|start service|stop service|\bmov(?:e|ing)\b|reconnect|shut ?off (?:my|the) gas|turn off (?:my|the) gas|disconnect (?:my|the) (?:gas|service)|consumo|cita|medidor", re.IGNORECASE)),
+    ("billing_payments_agent", re.compile(r"balance|bill|pay|autopay|budget|refund|due|charge|statement|factura|saldo|pagar|pago", re.IGNORECASE)),
+    ("account_support_agent", re.compile(r"outage|rebate|account number|log ?in|password|\bpin\b|profile|complaint|apag[o\u00f3]n|interrupci[o\u00f3]n", re.IGNORECASE)),
 )
 # The route labels the instructions set (M3 to M9) and the agent each one belongs to.
 _ROUTE_AGENTS = {"M3": "billing_payments_agent", "M4": "billing_payments_agent", "M5": "hardship_agent", "M6": "service_agent",
@@ -158,6 +163,27 @@ def _agent_for_intent(intent: str) -> str:
         if pattern.search(intent):
             return agent
     return "root_agent"
+
+
+_HAZARD_WORDS = re.compile(
+    r"gas|smell|odou?r|leak|carbon|monoxide|\bco\b|alarm|detector|beep|explo|fire|flame|burn|hiss|rotten|sulfur|sulphur|pilot|"
+    r"heat|heater|furnace|boiler|freez|cold|baby|infant|child|elderly|fuga|huelo|olor|calefac|fr[i\u00ed]o",
+    re.IGNORECASE,
+)
+
+
+def _hazard_reported() -> bool:
+    """True when the caller's latest message mentions something that could be a gas, carbon monoxide, fire or no-heat hazard, or is too
+    short to judge. Fails open when there is no message."""
+    text = str(context.state.get("utterance", "") or "").strip()
+    if not text or len(text.split()) <= 3:
+        return True
+    return bool(_HAZARD_WORDS.search(text))
+
+
+_NO_HAZARD = ("No safety hazard was reported in the caller's message, so do not start the emergency flow. A customer who relies on medical "
+              "equipment or life support and cannot pay needs a representative: call set_session_state with _action_trigger live_agent_handoff, "
+              "_escalation_reason user_requested_agent and _escalation_topic medical. Otherwise keep helping with the request.")
 
 
 def _no_handoff_action() -> str:
@@ -177,7 +203,7 @@ def _person_requested() -> bool:
     text = str(context.state.get("utterance", "") or "").strip()
     if not text or len(text.split()) <= 3:
         return True
-    return bool(_PERSON_REQUEST.search(text) or _SPECIALIST_TOPIC.search(text))
+    return bool(_AFFIRMATION.search(text) or _PERSON_REQUEST.search(text) or _SPECIALIST_TOPIC.search(text))
 
 
 _TRANSFER_TARGETS = ("billing_payments_agent", "hardship_agent", "service_agent", "account_support_agent", "auth_agent", "root_agent")

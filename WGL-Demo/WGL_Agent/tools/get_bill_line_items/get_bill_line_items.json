@@ -3,7 +3,7 @@
   "pythonFunction": {
     "name": "get_bill_line_items",
     "pythonCode": "tools/get_bill_line_items/python_function/python_code.py",
-    "description": "Returns the line items of one bill: customer charge, distribution, purchased gas charge (PGC), budget\ninstallment and, only on an account that carries one, the weather normalization line. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Account id of the identified account (REQUIRED).\n    period: Billing period key such as 2026-10 (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, period, amount, line_items, fixed_charge and corrected_from."
+    "description": "Returns the line items of one bill: customer charge, distribution, purchased gas charge (PGC), budget\ninstallment and, only on an account that carries one, the weather normalization line. Before calling this\ntool, speak a brief conversational pacing phrase while it runs.\n\nArgs:\n    account_id: Leave empty: the identified account is used automatically (any other id is refused).\n    period: Billing period key such as 2026-10 (REQUIRED).\n    tenant: Injected by the system from tenant_id; leave empty.\n\nReturns:\n    dict with ok, period, amount, line_items, fixed_charge and corrected_from."
   },
   "executionType": "SYNCHRONOUS",
   "displayName": "get_bill_line_items"
