@@ -51,6 +51,13 @@
       "default": ""
     }
   }, {
+    "name": "_office_notice",
+    "description": "Internal: given once the after-hours notice and callback form were shown, so they are never repeated in the same conversation.",
+    "schema": {
+      "type": "STRING",
+      "default": ""
+    }
+  }, {
     "name": "_emergency_card_shown",
     "description": "Internal: true once the chat emergency card was shown, so it is never repeated in the same conversation.",
     "schema": {

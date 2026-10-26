@@ -493,6 +493,49 @@ def _no_input_response(state: dict) -> LlmResponse:
     return LlmResponse.from_parts(parts=[Part.from_text(text=_NO_INPUT_PROMPT[_language(state)])])
 
 
+_ENFORCE_REAL_HOURS = False   # Demo setting: after-hours handling follows a demo clock (or demo_ctx.enforce_office_hours); True also follows the real clock.
+_OFFICE_SKIP = re.compile(r"\b(?:outage|power|smell|gas leak|leak|carbon monoxide|emergency|hours|open|opening|closing|locations?|where can i pay|in person|safety|rate|rates|tariff)\b", re.IGNORECASE)
+_OFFICE_COLLECTIONS = re.compile(
+    r"\b(?:can'?t|cannot|unable to|not able to|hard to)\s+pay\b|\b(?:shut-?\s?off|disconnect(?:ion|ed)?|past due|arrears|hardship|payment (?:plan|arrangement)|extension|assistance|collections)\b", re.IGNORECASE)
+_OFFICE_FRONT = re.compile(r"\b(?:pay|payment|autopay|auto-pay|ebill|budget plan|refund|pagar)\b", re.IGNORECASE)
+_OFFICE_BACK = re.compile(
+    r"\b(?:start|stop|move|moving|appointment|meter|reconnect|account|address|profile|rebate|portal|log ?in|password|complaint|service)\b", re.IGNORECASE)
+_CALLBACK_PROMPT = {"EN": "What number should we call you back on?", "ES": "¿En qué número le devolvemos la llamada?"}
+_AFTER_HOURS_FALLBACK = {"EN": "Our office is closed right now.", "ES": "Nuestra oficina está cerrada en este momento."}
+
+
+def _office_category(text: str) -> str:
+    """Which office the caller's request needs: collections, front (billing and payments), back (everything else); empty for emergencies and general questions."""
+    if not text or _OFFICE_SKIP.search(text):
+        return ""
+    for name, pattern in (("collections", _OFFICE_COLLECTIONS), ("front", _OFFICE_FRONT), ("back", _OFFICE_BACK)):
+        if pattern.search(text):
+            return name
+    return ""
+
+
+def _office_response(state: dict, user_text: str) -> Optional[LlmResponse]:
+    """Root only: a request that needs a closed office gets the after-hours notice and the callback form, once per conversation."""
+    if _THIS_AGENT != "root_agent" or str(state.get("_office_notice", "")) == "given":
+        return None
+    category = _office_category(user_text)
+    if not category:
+        return None
+    config = _plain(tools.get_tenant_config({}))
+    office = config.get("office") if isinstance(config, dict) and config.get("ok") else None
+    if not isinstance(office, dict) or not (_ENFORCE_REAL_HOURS or office.get("demo_clock") or office.get("enforce")):
+        return None
+    if not (office.get("closed") or {}).get(category):
+        return None
+    language = _language(state)
+    state["_office_notice"] = "given"
+    text = _verbatim_text(state, "after_hours_message") or _AFTER_HOURS_FALLBACK[language]
+    if str(state.get("channel", "")) == "chat":
+        card = _widget_call("show_callback_form", {"reason": "after_hours", "prompt": _CALLBACK_PROMPT[language]}, "Callback request form")
+        return LlmResponse.from_parts(parts=[Part.from_text(text=text), card])
+    return LlmResponse.from_parts(parts=[Part.from_text(text=f"{text} {_CALLBACK_PROMPT[language]}")])
+
+
 def before_model_callback(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
     state = callback_context.state
     user_text = _user_text(callback_context)
@@ -525,6 +568,10 @@ def before_model_callback(callback_context: CallbackContext, llm_request: LlmReq
         if errors >= _ERROR_LIMIT:
             queue = str(state.get("_escalation_topic", "")) or "billing"
             return _handoff_response(state, "system_unavailable", queue, "Repeated system errors.")
+
+    after_hours = _office_response(state, user_text)
+    if after_hours is not None:
+        return after_hours
 
     alone = _take_welcome_line(state, "alone")
     if alone:

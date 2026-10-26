@@ -446,6 +446,7 @@
   }
 
   var ICON = {
+    phone: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6.600 10.800a15 15 0 0 0 6.600 6.600l2.200-2.200a1 1 0 0 1 1-.25 11.400 11.400 0 0 0 3.600.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.500a1 1 0 0 1 1 1c0 1.250.2 2.450.57 3.600a1 1 0 0 1-.25 1z"/></svg>',
     chart: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 20V10h4v10H4zm6 0V4h4v16h-4zm6 0v-7h4v7h-4z"/></svg>',
     flame: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12.5 2c.4 3.200-1.700 5-3.300 6.900C7.700 10.700 6.800 12.400 6.800 14.400a5.400 5.400 0 0 0 10.800 0c0-2.400-1.300-4.300-2.600-5.500-.1 1.400-.8 2.300-1.700 2.800.5-3.400-.3-6.700-.8-9.700z"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 12.500l4.500 4.500L19 7.500"/></svg>',
@@ -721,6 +722,14 @@
         '<p class="et">' + esc(a.safety_text) + "</p>" +
         (tel ? '<a class="ecall" href="tel:' + esc(tel) + '">Call ' + esc(a.emergency_number) + "</a>" : "") + "</div>";
     },
+    show_callback_form: function (a) {
+      var after = a.reason !== "degraded";
+      return head("Request a callback", after ? "We are closed right now" : "We will call you back", ICON.phone) +
+        '<form class="cbf" novalidate data-lock="1"><label class="cbl" for="cbn">' + esc(a.prompt || "What number should we call you back on?") + "</label>" +
+        '<div class="cbr"><input id="cbn" class="cbi" name="cbn" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-describedby="cbe" />' +
+        '<button type="submit" class="btn">Request callback</button></div>' +
+        '<p id="cbe" class="cbe" role="alert" aria-live="polite"></p></form>';
+    },
     show_csat_card: function (a) {
       return head(a.prompt || "How did we do?", "Tap a star", "") + '<div class="stars" data-lock="1">' + stars() + "</div>";
     },
@@ -865,6 +874,9 @@
     ".opt .go{flex:none;color:var(--blue);font-size:22px;line-height:1}" +
     ".opt .ico,.cl .ico{width:32px;height:32px;border-radius:10px}" +
     ".fn{margin:10px 0 0;font-size:12px;color:var(--ink2);line-height:1.4}.cact{margin-top:10px}" +
+    ".cbf{display:flex;flex-direction:column;gap:6px}.cbl{font-size:13.5px;color:var(--ink2);line-height:1.35}.cbr{display:flex;gap:8px;flex-wrap:wrap}" +
+    ".cbi{flex:1;min-width:150px;font:inherit;font-size:15px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;color:var(--navy);background:#fff}.cbi:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:var(--blue)}" +
+    ".cbe{margin:0;min-height:16px;font-size:12.5px;color:#9b1c1c}.cbf.done .cbi,.cbf.done .btn{opacity:.55;pointer-events:none}.cbf.done .cbe{color:#1b6e3c}" +
     ".cmpw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;outline-offset:2px}" +
     ".cmp{width:100%;border-collapse:collapse;font-size:13px}" +
     ".cmp th,.cmp td{padding:8px 9px;text-align:center;border-bottom:1px solid #e9f0f6;font-variant-numeric:tabular-nums}" +
@@ -931,6 +943,7 @@
       this._render();
       var self = this;
       this._root.addEventListener("click", function (ev) { self._click(ev); });
+      this._root.addEventListener("submit", function (ev) { self._submit(ev); });
       var track = this._root.querySelector(".track");
       if (track) {
         track.addEventListener("scroll", function () { self._dots(track); }, { passive: true });
@@ -984,6 +997,25 @@
         setVars({ page_context: window.wglPageContext || pg, ui_language: chosen });
       }
       sendUserMessage(t.getAttribute("data-send"), this._tool, this);
+    };
+    WglCard.prototype._submit = function (ev) {
+      ev.preventDefault();
+      var form = ev.target;
+      if (!form || !form.classList || !form.classList.contains("cbf") || form.classList.contains("done")) { return; }
+      var input = form.querySelector(".cbi"), note = form.querySelector(".cbe");
+      var digits = String(input.value || "").replace(/\D/g, "");
+      if (digits.length === 11 && digits.charAt(0) === "1") { digits = digits.slice(1); }
+      if (digits.length !== 10 || /^[01]/.test(digits)) {
+        if (note) { note.textContent = "Please enter a 10-digit phone number."; }
+        input.setAttribute("aria-invalid", "true");
+        input.focus();
+        return;
+      }
+      input.removeAttribute("aria-invalid");
+      var shown = digits.slice(0, 3) + "-" + digits.slice(3, 6) + "-" + digits.slice(6);
+      form.classList.add("done");
+      if (note) { note.textContent = "Thanks, sending your number."; }
+      sendUserMessage("Please call me back at " + shown, this._tool, this);
     };
     WglCard.prototype._lang = function (code) {
       var p = this._p;

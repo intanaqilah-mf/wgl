@@ -67,6 +67,14 @@
                 6. When you shared a notice, end that reply with one short question: whether they still want help with what they first asked (name it briefly, for example paying the bill). Do not route in the same reply. Route it as usual on the next turn.
             </action>
         </step>
+        <step name="Callback_Number_Received">
+            <!-- WHY: After hours the system speaks the notice and shows the callback form itself (before_model callback); the model only has to file the ticket. -->
+            <trigger>{_office_notice} is given and the caller sends a callback number (for example Please call me back at 703-555-0142), or says a phone number in answer to the callback question.</trigger>
+            <action>
+                1. Call {@TOOL: create_callback_ticket} with reason after_hours and that number as callback_number, then give the ticket number in one short sentence and say a representative will call when the office opens.
+                2. Never disconnect the caller; offer help with anything that can be done now.
+            </action>
+        </step>
         <step name="Office_Closed">
             <trigger>The caller needs billing, payment, hardship, service or account help and the office hours have ended.</trigger>
             <action>

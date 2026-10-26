@@ -129,7 +129,9 @@ show_csat_card            {"prompt": "How did we do?"}
 ```
 
 Messages the existing cards send: quick-action chip -> the option label; slot -> `"I'll take <date>, <window> (slot <slot>)"` unless the slot has its own `action_message`; CSAT star -> `"I rate this experience N out of 5"`.
-Not rendered by us (left to the SDK): `show_callback_form`.
+show_callback_form        {"reason": "after_hours", "prompt": "What number should we call you back on?"}   // reason: after_hours or degraded
+
+The callback form validates a 10-digit US number in the card and sends `"Please call me back at 555-123-4567"` through the chat; the agent then calls `create_callback_ticket` with that number.
 
 ### New cards
 

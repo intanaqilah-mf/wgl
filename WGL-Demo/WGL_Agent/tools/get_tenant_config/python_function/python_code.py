@@ -1,5 +1,7 @@
 import json
+import re
 import time
+from datetime import date, datetime, timedelta, timezone
 
 
 def get_tenant_config(tenant: str = "") -> dict:
@@ -12,7 +14,8 @@ def get_tenant_config(tenant: str = "") -> dict:
         tenant: Injected by the system from tenant_id; leave empty.
 
     Returns:
-        dict with ok, brand_name, hours, hours_by_intent, timezone, holidays, demo_phones,
+        dict with ok, brand_name, hours, hours_by_intent, timezone, holidays, office (the clock and which
+        offices are closed right now), demo_phones,
         convenience_fees (by jurisdiction), payment_gateway_label, jurisdictions, programs,
         cold_weather_rules, esr_available, caller_jurisdiction, card_fees (the card convenience fee and
         limits for the caller's jurisdiction; empty when the jurisdiction charges no fee) and
@@ -281,9 +284,77 @@ def _get_tenant_config_impl() -> dict:
     card_fees = card_fees if isinstance(card_fees, dict) else {}
     result.update({
         "ok": True,
+        "office": _office_status(config),
         "esr_available": esr_available,
         "caller_jurisdiction": jurisdiction,
         "card_fees": card_fees if any(value for name, value in card_fees.items() if not name.endswith("_limit")) else {},
         "service_fees": service_fees if isinstance(service_fees, dict) else {},
     })
     return result
+
+
+_DAY_INDEX = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
+_HOURS_TEXT = re.compile(
+    r"(\w+)\s+through\s+(\w+),?\s+(\d{1,2})(?::(\d\d))?\s*(am|pm)\s+to\s+(\d{1,2})(?::(\d\d))?\s*(am|pm)", re.IGNORECASE)
+
+
+def _eastern_offset_hours(moment_utc: datetime) -> int:
+    """-4 during US daylight saving time (second Sunday of March to first Sunday of November), -5 otherwise."""
+    year = moment_utc.year
+    first_march = date(year, 3, 1)
+    dst_start = first_march + timedelta(days=(6 - first_march.weekday()) % 7 + 7)
+    first_november = date(year, 11, 1)
+    dst_end = first_november + timedelta(days=(6 - first_november.weekday()) % 7)
+    start = datetime(dst_start.year, dst_start.month, dst_start.day, 7, tzinfo=timezone.utc)   # 2:00 EST
+    end = datetime(dst_end.year, dst_end.month, dst_end.day, 6, tzinfo=timezone.utc)           # 2:00 EDT
+    return -4 if start <= moment_utc < end else -5
+
+
+def _minutes(hour: str, minute: str, meridiem: str) -> int:
+    return (int(hour) % 12 + (12 if meridiem.lower() == "pm" else 0)) * 60 + int(minute or 0)
+
+
+def _is_closed(hours_text, local_now: datetime, holidays: set) -> bool:
+    """True when the opening hours text (for example 'Monday through Friday, 8am to 6pm Eastern') says closed at that Eastern time.
+    Round-the-clock or unreadable wording never counts as closed."""
+    text = str(hours_text or "")
+    match = _HOURS_TEXT.search(text)
+    if "24 hours" in text.lower() or not match:
+        return False
+    first, last = _DAY_INDEX.get(match.group(1).lower()), _DAY_INDEX.get(match.group(2).lower())
+    if first is None or last is None:
+        return False
+    day = local_now.weekday()
+    open_day = first <= day <= last if first <= last else (day >= first or day <= last)
+    if not open_day or local_now.date().isoformat() in holidays:
+        return True
+    now_minutes = local_now.hour * 60 + local_now.minute
+    return not (_minutes(match.group(3), match.group(4), match.group(5)) <= now_minutes < _minutes(match.group(6), match.group(7), match.group(8)))
+
+
+def _office_status(config: dict) -> dict:
+    """The Eastern clock (the demo clock when one is set) and which offices (front, back, collections) are closed on it."""
+    demo = _object_var("demo_ctx")
+    override = str(demo.get("demo_clock_override") or "").strip()
+    local = None
+    if override:
+        try:
+            moment = datetime.fromisoformat(override.replace("Z", "+00:00"))
+            if moment.tzinfo is not None:
+                utc = moment.astimezone(timezone.utc)
+                moment = (utc + timedelta(hours=_eastern_offset_hours(utc))).replace(tzinfo=None)
+            local = moment
+        except ValueError:
+            local = None
+    is_demo_clock = local is not None
+    if local is None:
+        utc = datetime.now(timezone.utc)
+        local = (utc + timedelta(hours=_eastern_offset_hours(utc))).replace(tzinfo=None)
+    hours = config.get("hours") if isinstance(config.get("hours"), dict) else {}
+    holidays = {str(day) for day in (config.get("holidays") or [])}
+    return {
+        "clock": local.strftime("%Y-%m-%d %H:%M") + " Eastern",
+        "demo_clock": is_demo_clock,
+        "enforce": str(demo.get("enforce_office_hours", "")).strip().lower() in ("true", "1", "yes"),
+        "closed": {name: _is_closed(hours.get(name), local, holidays) for name in ("front", "back", "collections")},
+    }
