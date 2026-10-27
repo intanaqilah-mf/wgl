@@ -1,0 +1,37 @@
+C:\Users\iqbal.zulsafari\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pydub\utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+  PASS      balance -> bill summary card                 cards=['show_bill_summary_card'] ended=False | 'Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteen'
+  PASS      bill history -> trend card                   cards=['show_bill_trend_card'] ended=False | 'Your latest bill is eighty-six dollars and eighty-nine cents from October twenty twenty-si'
+  PASS      why is my bill high -> trend card            cards=['show_bill_trend_card'] ended=False | 'Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars'
+  PASS      what is my bill made of -> breakdown card    cards=['show_bill_breakdown_card'] ended=False | 'Your bill totals eighty-six dollars and eighty-nine cents. About thirty-two dollars and te'
+  PASS      compare months -> compare table              cards=['show_bill_trend_card', 'show_compare_table_card'] ended=False | 'I can compare this month with last month for you. I see that your bill went from twenty-ei'
+  PASS      gas used -> usage / weather card             cards=['show_usage_history_card'] ended=False | "Here's your gas usage history in therms over the past twelve months. Your usage peaked at "
+  PASS      weather vs usage -> weather card             cards=['show_weather_usage_card'] ended=False | 'Usage follows the cold: October 2026 peaked at 53.5 therms. Heating degree days were one h'
+  PASS      rebates -> rebate card                       cards=['show_rebate_card'] ended=False | 'Here are the rebates that match your home. Your furnace is about twelve years old, so you '
+  PASS      hardship first reply -> options card         cards=['show_options_card'] ended=False | "I'm sorry to hear that you're having trouble paying your bill and that you received a shut"
+  FAIL      payment methods / verify -> options or chips cards=[] ended=False | 'To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, w'
+  PASS      ways to pay / fees -> checklist              cards=['show_options_card'] ended=False | 'Your balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two '
+  PASS      gas smell -> emergency card                  cards=['show_emergency_card'] ended=False | 'If you smell gas, please leave the building immediately. Do not use switches, appliances o'
+  PASS      CO alarm -> emergency card                   cards=['show_emergency_card'] ended=False | 'If you smell gas, please leave the building immediately. Do not use switches, appliances o'
+  PASS      nothing more -> CSAT card, session stays open cards=['show_bill_summary_card', 'show_csat_card'] ended=False | 'How did we do today?'
+  PASS      start service -> checklist or slot picker    cards=['show_checklist_card'] ended=False | '<emoji>🔥</emoji> So you are starting your gas service, and I want to make sure you have al'
+  SOFT-MISS appointments (no card expected)              cards=[] ended=False | "It doesn't look like you have any appointments coming up. Is there anything else I can hel"
+  PASS      after hours -> callback form                 cards=['show_callback_form'] ended=False | 'Our team is available Monday through Friday from 8am to 6pm Eastern. I can take a message '
+===== CARD SUMMARY =====
+PASS      balance -> bill summary card
+PASS      bill history -> trend card
+PASS      why is my bill high -> trend card
+PASS      what is my bill made of -> breakdown card
+PASS      compare months -> compare table
+PASS      gas used -> usage / weather card
+PASS      weather vs usage -> weather card
+PASS      rebates -> rebate card
+PASS      hardship first reply -> options card
+FAIL      payment methods / verify -> options or chips
+PASS      ways to pay / fees -> checklist
+PASS      gas smell -> emergency card
+PASS      CO alarm -> emergency card
+PASS      nothing more -> CSAT card, session stays open
+PASS      start service -> checklist or slot picker
+SOFT-MISS appointments (no card expected)
+PASS      after hours -> callback form

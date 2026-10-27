@@ -1,0 +1,1815 @@
+[
+ {
+  "id": "A1",
+  "group": "A Identify and read",
+  "title": "Balance after typing the phone number (W01)",
+  "run": 1,
+  "verdict": "FAIL",
+  "failed": [
+   "bill summary card shown"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A1",
+  "group": "A Identify and read",
+  "title": "Balance after typing the phone number (W01)",
+  "run": 2,
+  "verdict": "FAIL",
+  "failed": [
+   "bill summary card shown"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A2",
+  "group": "A Identify and read",
+  "title": "Bill history (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Show me my bill history for the last few months.",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_bill_history",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. A year ago the same month was sixty-five dollars and four cents."
+   }
+  ]
+ },
+ {
+  "id": "A2",
+  "group": "A Identify and read",
+  "title": "Bill history (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Show me my bill history for the last few months.",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_bill_history",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. A year ago the same month was sixty-five dollars and four cents."
+   }
+  ]
+ },
+ {
+  "id": "A3",
+  "group": "A Identify and read",
+  "title": "Why is my bill high, cold snap (W14)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Shekhar. Let's pick up where we left off. Okay, your current balance is one hundred eighty-two dollars and sixty-eight cents, due on November fourteenth, twenty twenty-six.\n\nHow would you like to pay?"
+   },
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "That is a big jump, and I see why. Your bill is about one hundred thirty-one dollars higher than last month. Colder weather, more heating, added one hundred thirteen dollars and forty-one cents. Your longer thirty-four day billing cycle added eleven dollars and four cents. The gas cost rate charge added six dollars and seventy-four cents. Would you like me to text you the Washington Gas tips page?"
+   }
+  ]
+ },
+ {
+  "id": "A3",
+  "group": "A Identify and read",
+  "title": "Why is my bill high, cold snap (W14)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Shekhar. Let's pick up where we left off. Okay, your current balance is one hundred eighty-two dollars and sixty-eight cents, due on November fourteenth, twenty twenty-six.\n\nHow would you like to pay?"
+   },
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "That is a big jump, and I see why. Your bill is about one hundred thirty-one dollars higher than last month. Colder weather, more heating, added one hundred thirteen dollars and forty-one cents. Your longer thirty-four day billing cycle added eleven dollars and four cents. The gas cost rate charge added six dollars and seventy-four cents. Would you like me to text you the Washington Gas tips page?"
+   }
+  ]
+ },
+ {
+  "id": "A4",
+  "group": "A Identify and read",
+  "title": "Bill breakdown (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "What is my bill made of?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_bill_breakdown",
+     "show_bill_breakdown_card"
+    ],
+    "cards": [
+     "show_bill_breakdown_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Of your eighty-six dollars and eighty-nine cents bill, about thirty-two dollars is for the gas itself, about forty-nine dollars is for delivery, which is the customer charge and the cost of getting gas to your home, and the remaining five dollars and seventy-one cents is a catch-up for an earlier estimated reading."
+   }
+  ]
+ },
+ {
+  "id": "A4",
+  "group": "A Identify and read",
+  "title": "Bill breakdown (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "What is my bill made of?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_bill_breakdown",
+     "show_bill_breakdown_card"
+    ],
+    "cards": [
+     "show_bill_breakdown_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Of your eighty-six dollars and eighty-nine cents bill, about thirty-two dollars is for the gas itself, about forty-nine dollars is for delivery, which is the customer charge and the cost of getting gas to your home, and the remaining five dollars and seventy-one cents is a catch-up for an earlier estimated reading."
+   }
+  ]
+ },
+ {
+  "id": "A5",
+  "group": "A Identify and read",
+  "title": "Gas usage (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "How much gas did I use?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_usage_history",
+     "show_weather_usage_card"
+    ],
+    "cards": [
+     "show_weather_usage_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "So, your usage really follows the cold, with January two thousand twenty-six being your peak month at one hundred eighty-three point two therms. Your heating degree days are one hundred fifty-five, compared to twenty-four last month. In October two thousand twenty-six, you used fifty-three point five therms of gas."
+   }
+  ]
+ },
+ {
+  "id": "A5",
+  "group": "A Identify and read",
+  "title": "Gas usage (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "How much gas did I use?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_usage_history",
+     "show_weather_usage_card"
+    ],
+    "cards": [
+     "show_weather_usage_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "So, your usage really follows the cold, with January two thousand twenty-six being your peak month at one hundred eighty-three point two therms. Your heating degree days are one hundred fifty-five, compared to twenty-four last month. In October two thousand twenty-six, you used fifty-three point five therms of gas."
+   }
+  ]
+ },
+ {
+  "id": "A6",
+  "group": "A Identify and read",
+  "title": "Weather versus usage (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Does the weather explain my usage?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_usage_history",
+     "show_weather_usage_card"
+    ],
+    "cards": [
+     "show_weather_usage_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Well, it looks like your gas usage generally follows how cold it is. Your peak usage was in January two thousand twenty-six with one hundred eighty-three point two therms. Your heating degree days were one hundred fifty-five this month, compared to twenty-four last month. You used fifty-three point five therms in October two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A6",
+  "group": "A Identify and read",
+  "title": "Weather versus usage (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Could I please get the mobile number associated with your account?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "fetch_account_by_phone",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is eighty-six dollars and eighty-nine cents, and it is due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Does the weather explain my usage?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "get_usage_history",
+     "show_weather_usage_card"
+    ],
+    "cards": [
+     "show_weather_usage_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Well, it looks like your gas usage generally follows how cold it is. Your peak usage was in January two thousand twenty-six with one hundred eighty-three point two therms. Your heating degree days were one hundred fifty-five this month, compared to twenty-four last month. You used fifty-three point five therms in October two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 1,
+  "verdict": "FAIL",
+  "failed": [
+   "answered with figures"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I apologize, but I was unable to retrieve that information for you. Is there anything else I can help with?"
+   }
+  ]
+ },
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I can compare this month with last month for you. Your bill went from twenty-eight dollars and fifty-nine cents in September to eighty-six dollars and eighty-nine cents in October. The biggest difference is the gas used, which went from eleven point nine therms to fifty-three point five therms, and the billing period was also longer, thirty-four days compared to twenty-eight days. The heating degree days, which measure how cold it was, also increased from thirty-nine to one hundred thirty-seven."
+   }
+  ]
+ },
+ {
+  "id": "A8",
+  "group": "A Identify and read",
+  "title": "Caller ID: balance with no questions asked",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A8",
+  "group": "A Identify and read",
+  "title": "Caller ID: balance with no questions asked",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "B1",
+  "group": "B Verify and pay",
+  "title": "Pay my bill: verification comes before any payment (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   }
+  ]
+ },
+ {
+  "id": "B1",
+  "group": "B Verify and pay",
+  "title": "Pay my bill: verification comes before any payment (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   }
+  ]
+ },
+ {
+  "id": "B2",
+  "group": "B Verify and pay",
+  "title": "Wrong last 4 of SSN is refused (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "Social Security number",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   },
+   {
+    "user": "0000",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   }
+  ]
+ },
+ {
+  "id": "B2",
+  "group": "B Verify and pay",
+  "title": "Wrong last 4 of SSN is refused (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "Social Security number",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   },
+   {
+    "user": "0000",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   }
+  ]
+ },
+ {
+  "id": "B3",
+  "group": "B Verify and pay",
+  "title": "Three wrong answers lock verification (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "Social Security number",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   },
+   {
+    "user": "0000",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   },
+   {
+    "user": "1111",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It looks like we're having trouble verifying your identity with that information. I'll connect you with a representative who can help you with this."
+   },
+   {
+    "user": "2222",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, it looks like we're still having trouble verifying your identity. I'll connect you with a representative who can help you with this."
+   }
+  ]
+ },
+ {
+  "id": "B4",
+  "group": "B Verify and pay",
+  "title": "Correct last 4 of SSN verifies and returns to the payment (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "Social Security number",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, those details didn't match what we have on file. Would you like to try again or use a different method to verify your identity?"
+   },
+   {
+    "user": "<redacted>",
+    "agents": [
+     "auth_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "validate_ssn_last4",
+     "TRANSFER->billing_payments_agent",
+     "get_verbatim_string"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Before we continue, I want you to know that your payment card details are kept secure. Your card information is processed through our secure payment provider, and it is never stored or repeated by this assistant."
+   }
+  ]
+ },
+ {
+  "id": "B5",
+  "group": "B Verify and pay",
+  "title": "Typed phone, pay my bill: identified, then verification (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "does not announce internal routing or ask permission to transfer"
+  ],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you'd like to pay your bill. Since I don't have access to your account details as a guest, I'll need to identify your account first. To do that, I'll transfer you to our authentication system. Is that okay?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thank you for providing your phone number. It looks like we found an account.\n\nI'll need to ask a few quick questions to verify your identity, so we can make sure your account is secure. How would you like to verify your account? We can use the last four digits of your Social Security Number, or the last four digits of the credit card we have on file."
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help with that. Please tell me the last four digits of the card you'd like to use."
+   }
+  ]
+ },
+ {
+  "id": "B5",
+  "group": "B Verify and pay",
+  "title": "Typed phone, pay my bill: identified, then verification (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "does not announce internal routing or ask permission to transfer"
+  ],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you'd like to pay your bill. Since I don't have access to your account details as a guest, I'll need to identify your account first. To do that, I'll transfer you to our authentication system. Is that okay?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thank you for providing your phone number. It looks like we found an account.\n\nI'll need to ask a few quick questions to verify your identity, so we can make sure your account is secure. How would you like to verify your account? We can use the last four digits of your Social Security Number, or the last four digits of the credit card we have on file."
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help with that. Please tell me the last four digits of the card you'd like to use."
+   }
+  ]
+ },
+ {
+  "id": "B6",
+  "group": "B Verify and pay",
+  "title": "Change request (budget plan) requires verification (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "asks to verify before proposing the plan"
+  ],
+  "turns": [
+   {
+    "user": "I'd like to sign up for the budget plan.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_billing_history"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that! The Budget Plan is a great way to avoid seasonal spikes in your gas bill by spreading your estimated yearly cost into equal monthly payments.\n\nBased on your past usage, I can set up your monthly payment at around $48. Does that sound good to you?"
+   }
+  ]
+ },
+ {
+  "id": "B6",
+  "group": "B Verify and pay",
+  "title": "Change request (budget plan) requires verification (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "asks to verify before proposing the plan"
+  ],
+  "turns": [
+   {
+    "user": "I'd like to sign up for the budget plan.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_billing_history"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that! The Budget Plan is a great way to avoid seasonal spikes in your gas bill by spreading your estimated yearly cost into equal monthly payments.\n\nBased on your past usage, I can set up your monthly payment at around $48. Does that sound good to you?"
+   }
+  ]
+ },
+ {
+  "id": "B7",
+  "group": "B Verify and pay",
+  "title": "Cancel a payment requires verification (W07)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need to cancel my pending payment.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I see you have a pending payment of eighty-five dollars, which was expected to post on October twentieth, two thousand twenty-six. That payment is no longer eligible for cancellation."
+   }
+  ]
+ },
+ {
+  "id": "B7",
+  "group": "B Verify and pay",
+  "title": "Cancel a payment requires verification (W07)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need to cancel my pending payment.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I see you have a pending payment of eighty-five dollars, which was expected to post on October twentieth, two thousand twenty-six. That payment is no longer eligible for cancellation."
+   }
+  ]
+ },
+ {
+  "id": "C1",
+  "group": "C Hardship",
+  "title": "Shutoff notice, typed phone (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "options shown straight after identification (no extra verification)"
+  ],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you're going through a tough time, and I want to assure you that we're here to help. I see that you're concerned about a shutoff notice.\n\nTo help you with your bill and explore your options, I need to securely access your account information. We can do a quick verification to get that done. Would you like to proceed with that?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "hardship_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your account. To make sure I'm speaking with the right person, could you please tell me how you'd like to verify your account today? We can use the last four digits of your Social Security number, your portal PIN, or the last four digits of the credit card we have on file."
+   }
+  ]
+ },
+ {
+  "id": "C1",
+  "group": "C Hardship",
+  "title": "Shutoff notice, typed phone (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "options shown straight after identification (no extra verification)"
+  ],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you're going through a tough time, and I want to assure you that we're here to help. I see that you're concerned about a shutoff notice.\n\nTo help you with your bill and explore your options, I need to securely access your account information. We can do a quick verification to get that done. Would you like to proceed with that?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "hardship_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your account. To make sure I'm speaking with the right person, could you please tell me how you'd like to verify your account today? We can use the last four digits of your Social Security number, your portal PIN, or the last four digits of the credit card we have on file."
+   }
+  ]
+ },
+ {
+  "id": "C2",
+  "group": "C Hardship",
+  "title": "Shutoff notice with caller ID (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   }
+  ]
+ },
+ {
+  "id": "C2",
+  "group": "C Hardship",
+  "title": "Shutoff notice with caller ID (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   }
+  ]
+ },
+ {
+  "id": "C3",
+  "group": "C Hardship",
+  "title": "Explains the Arrearage Management Program without enrolling (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   },
+   {
+    "user": "Tell me about the Arrearage Management Program",
+    "agents": [
+     "hardship_agent"
+    ],
+    "tools": [
+     "get_verbatim_string"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "The Arrearage Management Program will place your account on a Budget Plan. Each month you pay your budget amount on time, one-twelfth of the balance at enrollment will be forgiven. After 12 months your whole past-due balance will be forgiven."
+   }
+  ]
+ },
+ {
+  "id": "C3",
+  "group": "C Hardship",
+  "title": "Explains the Arrearage Management Program without enrolling (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   },
+   {
+    "user": "Tell me about the Arrearage Management Program",
+    "agents": [
+     "hardship_agent"
+    ],
+    "tools": [
+     "get_verbatim_string"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "The Arrearage Management Program will place your account on a Budget Plan. Each month you pay your budget amount on time, one-twelfth of the balance at enrollment will be forgiven. After 12 months your whole past-due balance will be forgiven."
+   }
+  ]
+ },
+ {
+  "id": "C4",
+  "group": "C Hardship",
+  "title": "Asks for a payment extension (W05, MD)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need more time to pay, can I get an extension?",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "get_wgl_pay_extension_eligibility"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you need a little more time to pay your bill, and I'm happy to help you with that.\n\nBased on the information I have, you are eligible for a payment extension. We can extend your due date up to **November 15, 2026**. Would that work for you?"
+   }
+  ]
+ },
+ {
+  "id": "C4",
+  "group": "C Hardship",
+  "title": "Asks for a payment extension (W05, MD)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need more time to pay, can I get an extension?",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "get_wgl_pay_extension_eligibility"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you need a little more time to pay your bill, and I'm happy to help you with that.\n\nBased on the information I have, you are eligible for a payment extension. We can extend your due date up to **November 15, 2026**. Would that work for you?"
+   }
+  ]
+ },
+ {
+  "id": "C5",
+  "group": "C Hardship",
+  "title": "Customer with no arrears asks for payment help (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I'm struggling to pay my bill.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're struggling with your bill. We have options that can help.\n\nWe can set up a payment arrangement to spread the balance over a few months, or we can look into assistance programs that can help with energy costs. Which of these sounds better for you right now?"
+   }
+  ]
+ },
+ {
+  "id": "C5",
+  "group": "C Hardship",
+  "title": "Customer with no arrears asks for payment help (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I'm struggling to pay my bill.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're struggling with your bill. We have options that can help.\n\nWe can set up a payment arrangement to spread the balance over a few months, or we can look into assistance programs that can help with energy costs. Which of these sounds better for you right now?"
+   }
+  ]
+ },
+ {
+  "id": "C6",
+  "group": "C Hardship",
+  "title": "Energy assistance programs question (W04, DC)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there any help paying my gas bill?",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I am glad you reached out, Denise. We have a few options that could help. You might be eligible for our Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past due amount is forgiven each month you make an on-time payment. We could also set up a payment plan to spread your balance over several months, or look into a payment extension. Additionally, there are other assistance programs available from various agencies. Which of these sounds like the best fit for you?"
+   }
+  ]
+ },
+ {
+  "id": "C6",
+  "group": "C Hardship",
+  "title": "Energy assistance programs question (W04, DC)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there any help paying my gas bill?",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I am glad you reached out, Denise. We have a few options that could help. You might be eligible for our Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past due amount is forgiven each month you make an on-time payment. We could also set up a payment plan to spread your balance over several months, or look into a payment extension. Additionally, there are other assistance programs available from various agencies. Which of these sounds like the best fit for you?"
+   }
+  ]
+ }
+]

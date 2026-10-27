@@ -437,8 +437,8 @@ def _identified_action() -> str:
                 "call get_auth_options and follow the verification steps.")
     target = _return_target(intent)
     _set_var("_return_to_agent", "")
-    return (f"Identification passed. Your next output must be only the function call transfer_to_agent with agent {target}: call transfer_to_agent with agent {target} now. "
-            "Write no text at all: do not greet, do not answer, do not say you are transferring and do not ask for verification; the agent that takes over continues the request.")
+    return (f"Identification passed. Call the function transfer_to_agent with agent {target} now; that call is your whole reply. "
+            "The agent that takes over continues the request, so add nothing before or after the call.")
 
 
 _LOCKED_NOTE = (" Note: the caller's online account is locked (account_locked true), so account changes are refused until it is unlocked. "

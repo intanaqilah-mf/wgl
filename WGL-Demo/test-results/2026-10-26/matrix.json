@@ -1,0 +1,344 @@
+[
+ {
+  "account": "S01",
+  "phone_group": [
+   "S01",
+   "W14"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Shekhar. Let's pick up where we left off. Okay, your current balance is one hundred eighty-two dollars and sixty-eight cents, due on November fourteenth, twenty twenty-six.\n\nHow would you like to pay?",
+  "text2": ""
+ },
+ {
+  "account": "S02",
+  "phone_group": [
+   "S02"
+  ],
+  "verdict": "OTHER",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "I couldn't find an account matching that phone number. Would you like to try a different mobile number, or I can look it up by your name and service address, or account number?",
+  "text2": "I can help with that! Could I please get the mobile number associated with your account?"
+ },
+ {
+  "account": "S03",
+  "phone_group": [
+   "S03"
+  ],
+  "verdict": "OTHER",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "I couldn't find an account matching that phone number. Would you like to try again or provide your name and service address instead?",
+  "text2": "Can you please provide your first name, last name, and service address? This will help me find your account."
+ },
+ {
+  "account": "S04",
+  "phone_group": [
+   "S04"
+  ],
+  "verdict": "OTHER",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "I couldn't find an account matching that phone number. Would you like to try a different mobile number, or perhaps your name and service address?",
+  "text2": "Please provide your first name, last name, and service address so I can try to locate your account."
+ },
+ {
+  "account": "S05",
+  "phone_group": [
+   "S05"
+  ],
+  "verdict": "OTHER",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "I'm sorry, I couldn't find an account matching that phone number. Would you like to try another mobile number, or I can look it up by your first name, last name, and service address?",
+  "text2": "I can help you with that. To access your account, I'll need to identify you first. Would you like to try looking up your account by your first name, last name, and service address, or do you have an a"
+ },
+ {
+  "account": "S06",
+  "phone_group": [
+   "S06"
+  ],
+  "verdict": "OTHER",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "I can't seem to find an account with that number. Would you like to try another mobile number, or I can look it up by your name and service address?",
+  "text2": "Would you like to try another mobile number, or I can look it up by your name and service address?"
+ },
+ {
+  "account": "W01",
+  "phone_group": [
+   "W01"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Chander. Let's pick up where we left off. Your current balance is **$86.89**, and it's due on **November 14, 2026**.\nHow would you like to pay?",
+  "text2": ""
+ },
+ {
+  "account": "W02",
+  "phone_group": [
+   "W02"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, David. Let's pick up where we left off. You have a balance of eighty-one dollars and nine cents due on November eleventh, twenty twenty-six. You also have a pending payment of sixty dollars that is scheduled to post on October twentieth, twenty twenty-six.\n\nIs there anything else I can help ",
+  "text2": ""
+ },
+ {
+  "account": "W03",
+  "phone_group": [
+   "W03"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Priya. Let's pick up where we left off. Okay, I see here that your current balance is forty-two dollars and seventy-four cents. That's due on November ninth, twenty twenty-six.\n\nIs there anything else I can help you with today?",
+  "text2": ""
+ },
+ {
+  "account": "W04",
+  "phone_group": [
+   "W04"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Denise. Let's pick up where we left off. Your current balance is three hundred ninety-four dollars and thirty-nine cents. That was due on September twenty-fourth, two thousand twenty-six. There's also a past due amount of three hundred twenty-three dollars and sixty-four cents. This account ",
+  "text2": ""
+ },
+ {
+  "account": "W05",
+  "phone_group": [
+   "W05"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Tom. Let's pick up where we left off. Okay, your current balance is three hundred ninety-one dollars and thirty cents, and your due date was September twenty-sixth, two thousand twenty-six. I also see you have a past due amount of three hundred thirty-eight dollars and fifty-two cents.",
+  "text2": ""
+ },
+ {
+  "account": "W06",
+  "phone_group": [
+   "W06"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Romero Auto Supply LLC. Let's pick up where we left off. Okay, your current balance is one hundred forty-eight dollars and three cents, due on November twelfth, twenty twenty-six.\n\nHow would you like to pay?",
+  "text2": ""
+ },
+ {
+  "account": "W07",
+  "phone_group": [
+   "W07"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Grace. Let's pick up where we left off. Okay, I see you have a credit balance of thirty-two dollars and fifteen cents on your account, and a pending payment of eighty-five dollars that is scheduled to post on October twentieth, twenty twenty-six.",
+  "text2": ""
+ },
+ {
+  "account": "W08",
+  "phone_group": [
+   "W08"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Samir. Let's pick up where we left off. Okay, your current balance is one hundred nine dollars and fifty-two cents, due on November thirteenth, twenty twenty-six.",
+  "text2": ""
+ },
+ {
+  "account": "W09",
+  "phone_group": [
+   "W09"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status",
+   "show_bill_summary_card"
+  ],
+  "text": "Thanks, Hannah. Let's pick up where we left off. Your current balance is forty-four dollars and ninety-two cents, due on November seventh, two thousand twenty-six.",
+  "text2": ""
+ },
+ {
+  "account": "W10",
+  "phone_group": [
+   "W10"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status",
+   "show_quick_actions"
+  ],
+  "text": "Thanks, Carlos. Let's pick up where we left off. Your current balance is **$37.53**, due **November 5, 2026**.\n | Your current balance is thirty-seven dollars and fifty-three cents, due on November fifth, twenty twenty-six. What else can I help with?",
+  "text2": ""
+ },
+ {
+  "account": "W11",
+  "phone_group": [
+   "W11",
+   "W11-4",
+   "W11-5",
+   "W11-7",
+   "W11-3",
+   "W11-2",
+   "W11-6"
+  ],
+  "verdict": "ASKS_STREET",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "Okay, I see multiple accounts associated with that phone number. To make sure I access the correct one, could you please tell me the street name of the service address you're referring to?",
+  "text2": "To get your balance, I need to make sure I have the right account. Could you please provide the street name for the service address associated with the account you're asking about?"
+ },
+ {
+  "account": "W12",
+  "phone_group": [
+   "W12"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent",
+   "root_agent",
+   "billing_payments_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone",
+   "TRANSFER->root_agent",
+   "TRANSFER->billing_payments_agent",
+   "get_payment_status"
+  ],
+  "text": "Thanks, Naomi. Let's pick up where we left off. Your current balance is **$114.99**, due **November 12, 2026**.",
+  "text2": ""
+ },
+ {
+  "account": "W13",
+  "phone_group": [
+   "W13"
+  ],
+  "verdict": "BALANCE",
+  "agents": [
+   "auth_agent"
+  ],
+  "tools": [
+   "fetch_account_by_phone"
+  ],
+  "text": "It looks like your account is currently locked. We'll need to unlock it before we can proceed. How would you like to verify your identity to do this? We can use the last four digits of your Social Security Number, your portal PIN, or the last four digits of your card on file.",
+  "text2": "Thanks, Beatrice. Let's pick up where we left off. Your current balance is forty-three dollars and forty-seven cents, due on November ninth, twenty twenty-six."
+ }
+]

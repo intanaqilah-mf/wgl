@@ -1,0 +1,269 @@
+[
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n\n | I am glad you reached out. We have a few options to help you. We have the Arrearage Management Program, which is a twelve-month Budget Plan where your past due balance is forgiven one-twelfth each month. There are also payment plans that can spread your balance over several months, a payment extension, and other help from agencies and programs. Which of these would you like to hear more about?"
+   }
+  ]
+ },
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n\n | I am glad you reached out. We have a few options to help you. We have the Arrearage Management Program, which is a twelve-month Budget Plan where your past due balance is forgiven one-twelfth each month. There are also payment plans that can spread your balance over several months, a payment extension, and other help from agencies and programs. Which of these would you like to hear more about?"
+   }
+  ]
+ },
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 3,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n | I'm glad you reached out to us, and I want to help you find the best solution. You may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options to help you. We can explore the Arrearage Management Program, which is a 12-month budget plan where a portion of your past due amount is forgiven each month as you make on-time payments. There's also a payment plan that allows you to spread your balance over several months, or a payment extension to give you more time to pay. We can also look into other assistance programs. Which of these sounds most helpful to you?"
+   }
+  ]
+ },
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 4,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n | I'm glad you reached out to us, and I want to help you find the best solution. You may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options to help you. We can explore the Arrearage Management Program, which is a 12-month budget plan where a portion of your past due amount is forgiven each month as you make on-time payments. There's also a payment plan that allows you to spread your balance over several months, or a payment extension to give you more time to pay. We can also look into other assistance programs. Which of these sounds most helpful to you?"
+   }
+  ]
+ },
+ {
+  "id": "A8",
+  "group": "A Identify and read",
+  "title": "Caller ID: balance with no questions asked",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A8",
+  "group": "A Identify and read",
+  "title": "Caller ID: balance with no questions asked",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ },
+ {
+  "id": "A8",
+  "group": "A Identify and read",
+  "title": "Caller ID: balance with no questions asked",
+  "run": 3,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   }
+  ]
+ }
+]

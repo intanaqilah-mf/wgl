@@ -1,0 +1,903 @@
+[
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 1,
+  "verdict": "FAIL",
+  "failed": [
+   "answered with figures"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I am sorry, there was a technical difficulty. Could you please try again?"
+   }
+  ]
+ },
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I can compare this month with last month for you. Your bill went from twenty-eight dollars and fifty-nine cents in September to eighty-six dollars and eighty-nine cents in October. The biggest difference is the gas used, which went from eleven point nine therms to fifty-three point five therms, and the billing period was also longer, thirty-four days compared to twenty-eight days. The heating degree days, which measure how cold it was, also increased from thirty-nine to one hundred thirty-seven."
+   }
+  ]
+ },
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 3,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I apologize, there was an error when trying to compare your bills. Please allow me a moment to correct it.\n\nYour bill went from twenty-eight dollars and fifty-nine cents in September to eighty-six dollars and eighty-nine cents in October. The biggest difference is the gas used, which went from eleven point nine therms to fifty-three point five therms, and the billing period was also longer, thirty-four days compared to twenty-eight days. The heating degree days, which measure how cold it was, also increased from thirty-nine to one hundred thirty-seven."
+   }
+  ]
+ },
+ {
+  "id": "A7",
+  "group": "A Identify and read",
+  "title": "Compare months after a high-bill answer (W01, caller ID)",
+  "run": 4,
+  "verdict": "FAIL",
+  "failed": [
+   "answered with figures"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "run_high_bill_diagnosis",
+     "get_bill_history",
+     "get_account_insights",
+     "show_bill_trend_card"
+    ],
+    "cards": [
+     "show_bill_trend_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your latest bill is eighty-six dollars and eighty-nine cents, which is fifty-eight dollars higher than last month. Colder weather explains forty-three dollars and fifty-seven cents of the rise, the longer thirty-four day billing cycle added six dollars and thirteen cents, an estimated meter read corrected added five dollars and seventy-one cents, and the gas cost rate change added two dollars and sixty-eight cents. Would you like me to text you the Washington Gas tips page?"
+   },
+   {
+    "user": "Compare this month with last month",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis",
+     "show_compare_table_card"
+    ],
+    "cards": [
+     "show_compare_table_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I apologize, but I was unable to retrieve that information for you. Is there anything else I can help with?"
+   }
+  ]
+ },
+ {
+  "id": "M1",
+  "group": "M Topic hops",
+  "title": "Balance, then an outage question (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "billing_payments_agent",
+     "root_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm not showing any outages or planned maintenance in your area right now.\n\nIs there anything else I can help you with?"
+   }
+  ]
+ },
+ {
+  "id": "M1",
+  "group": "M Topic hops",
+  "title": "Balance, then an outage question (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "billing_payments_agent",
+     "root_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, based on the latest information we have, there isn't an outage reported in your ZIP code, 22201."
+   }
+  ]
+ },
+ {
+  "id": "M2",
+  "group": "M Topic hops",
+  "title": "Balance, then a rebate question (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "What rebates are there for a thermostat?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "knowledge_base_search",
+     "send_info_link"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "We have a smart thermostat rebate of up to one hundred dollars in Virginia, but please confirm the amount before buying, as rebates can change.\n\nI've sent a link with more information about our rebates to your mobile number ending in 4374. Is there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "M2",
+  "group": "M Topic hops",
+  "title": "Balance, then a rebate question (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "What rebates are there for a thermostat?",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "knowledge_base_search",
+     "send_info_link"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "We have a smart thermostat rebate of up to one hundred dollars in Virginia, but please confirm the amount before buying, as rebates can change.\n\nI've sent a link with more information about our rebates to your mobile number ending in 4374. Is there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "M3",
+  "group": "M Topic hops",
+  "title": "Balance, then appointments (W09)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is forty-four dollars and ninety-two cents, due on November seventh, twenty twenty-six."
+   },
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "billing_payments_agent",
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, let me check that for you.\n\nIt looks like you have a few appointments coming up. You have a meter test scheduled for today, October twenty-sixth, between twelve PM and four PM. There's also a service start appointment for today, October twenty-sixth, between twelve PM and four PM, which is currently delayed. Additionally, you have a service stop appointment for today, October twenty-sixth, between eight AM and twelve PM, and the technician is currently en route. Lastly, there's a reconnection appointment scheduled for November third between eight AM and twelve PM."
+   }
+  ]
+ },
+ {
+  "id": "M3",
+  "group": "M Topic hops",
+  "title": "Balance, then appointments (W09)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is forty-four dollars and ninety-two cents, due on November seventh, twenty twenty-six."
+   },
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "billing_payments_agent",
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Yes, you do. You have a meter test scheduled for today, October twenty-sixth, between twelve PM and four PM. There's also a service start that's delayed for today, October twenty-sixth, between twelve PM and four PM. A service stop is currently en route for today, October twenty-sixth, between eight AM and twelve PM. And a reconnection is scheduled for November third, twenty twenty-six, between eight AM and twelve PM.\n\nIs there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n\n | I am glad you reached out. We have a few options to help you. We have the Arrearage Management Program, which is a twelve-month Budget Plan where your past due balance is forgiven one-twelfth each month. There are also payment plans that can spread your balance over several months, a payment extension, and other help from agencies and programs. Which of these would you like to hear more about?"
+   }
+  ]
+ },
+ {
+  "id": "M4",
+  "group": "M Topic hops",
+  "title": "Balance, then 'I can't pay this' (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is **$394.39**, and it was due on **September 24, 2026**. I also show a past due amount of **$323.64**.\nHow would you like to pay?"
+   },
+   {
+    "user": "I can't pay this, I got a shutoff notice.",
+    "agents": [
+     "billing_payments_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I understand this is a difficult situation, and I'm here to help you explore your options.\n | I'm glad you reached out to us, and I want to help you find the best solution. You may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options to help you. We can explore the Arrearage Management Program, which is a 12-month budget plan where a portion of your past due amount is forgiven each month as you make on-time payments. There's also a payment plan that allows you to spread your balance over several months, or a payment extension to give you more time to pay. We can also look into other assistance programs. Which of these sounds most helpful to you?"
+   }
+  ]
+ },
+ {
+  "id": "M5",
+  "group": "M Topic hops",
+  "title": "Usage, then why the bill is high (W01)",
+  "run": 1,
+  "verdict": "FAIL",
+  "failed": [
+   "trend card"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How much gas did I use?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_usage_history",
+     "show_usage_history_card"
+    ],
+    "cards": [
+     "show_usage_history_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Here's your gas usage history in therms over the past twelve months. Your usage peaked at one hundred eighty-three point two therms in January two thousand twenty-six and has been falling since then."
+   },
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "service_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I can help with that. Looking at your account, your bill was about fifty-eight dollars higher. Most of that, around forty-three dollars and fifty-seven cents, was due to colder weather, meaning more heating was needed.\n\nOther factors included:\n*   A longer billing cycle of thirty-four days compared to twenty-eight days previously, which added about six dollars and thirteen cents.\n*   A correction from an estimated meter read, which increased the bill by about five dollars and seventy-one cents.\n*   And a change in the gas cost rate, which added about two dollars and sixty-eight cents.\n\nWould you like to know more about any of these, or perhaps discuss ways to manage your bill?"
+   }
+  ]
+ },
+ {
+  "id": "M5",
+  "group": "M Topic hops",
+  "title": "Usage, then why the bill is high (W01)",
+  "run": 2,
+  "verdict": "FAIL",
+  "failed": [
+   "trend card"
+  ],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How much gas did I use?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_usage_history",
+     "show_usage_history_card"
+    ],
+    "cards": [
+     "show_usage_history_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Here's your gas usage history in therms over the past twelve months. Your usage peaked at one hundred eighty-three point two therms in January two thousand twenty-six and has been falling since then."
+   },
+   {
+    "user": "Why is my bill so high?",
+    "agents": [
+     "service_agent"
+    ],
+    "tools": [
+     "run_high_bill_diagnosis"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I can help with that. Looking at your account, your bill was about fifty-eight dollars higher. Most of that, around forty-three dollars and fifty-seven cents, was due to colder weather, meaning more heating was needed.\n\nOther factors included:\n*   A longer billing cycle of thirty-four days compared to twenty-eight days previously, which added about six dollars and thirteen cents.\n*   A correction from an estimated meter read, which increased the bill by about five dollars and seventy-one cents.\n*   And a change in the gas cost rate, which added about two dollars and sixty-eight cents.\n\nWould you like to know more about any of these, or perhaps discuss ways to manage your bill?"
+   }
+  ]
+ },
+ {
+  "id": "M6",
+  "group": "M Topic hops",
+  "title": "Appointments, then balance (W09)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "balance card"
+  ],
+  "turns": [
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a few appointments coming up.\n- A meter test is scheduled for today, October twenty-sixth, between 12:00 PM and 4:00 PM.\n- A service start is scheduled for today, October twenty-sixth, between 12:00 PM and 4:00 PM. It is currently delayed.\n- A service stop is scheduled for today, October twenty-sixth, between 8:00 AM and 12:00 PM. The technician is currently en route.\n- A service reconnection is scheduled for November third, between 8:00 AM and 12:00 PM.\n\nIs there anything else I can help you with today?"
+   },
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "service_agent",
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your current balance is forty-four dollars and ninety-two cents, due on November seventh, twenty twenty-six.\n\nIs there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "M6",
+  "group": "M Topic hops",
+  "title": "Appointments, then balance (W09)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [
+   "balance card"
+  ],
+  "turns": [
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a few appointments coming up.\n- A meter test is scheduled for today, October twenty-sixth, between 12:00 PM and 4:00 PM.\n- A service start is scheduled for today, October twenty-sixth, between 12:00 PM and 4:00 PM. It is currently delayed.\n- A service stop is scheduled for today, October twenty-sixth, between 8:00 AM and 12:00 PM. The technician is currently en route.\n- A service reconnection is scheduled for November third, between 8:00 AM and 12:00 PM.\n\nIs there anything else I can help you with today?"
+   },
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "service_agent",
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your current balance is forty-four dollars and ninety-two cents, due on November seventh, twenty twenty-six.\n\nIs there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "M7",
+  "group": "M Topic hops",
+  "title": "Hardship, then a rebate question (W04)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   },
+   {
+    "user": "Are there any rebates for a new furnace?",
+    "agents": [
+     "hardship_agent",
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->account_support_agent",
+     "find_rebates",
+     "show_rebate_card"
+    ],
+    "cards": [
+     "show_rebate_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Washington Gas doesn't currently offer a rebate program for furnaces in the District of Columbia. However, you might be interested in a one-hundred-dollar offer on a select Rinnai tankless water heater. This offer expires on December thirty-first, twenty twenty-six. Additionally, D.C. residents can find other rebate opportunities through the D.C. Sustainable Energy Utility. Would you like me to text you a link to the D.C. Sustainable Energy Utility, or would you like to hear more about the Rinnai offer?"
+   }
+  ]
+ },
+ {
+  "id": "M7",
+  "group": "M Topic hops",
+  "title": "Hardship, then a rebate question (W04)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I can't pay my bill and I got a shutoff notice.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "get_pa_options",
+     "show_options_card"
+    ],
+    "cards": [
+     "show_options_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that you're having trouble paying your bill and that you received a shutoff notice. I'm here to help you explore your options.\n\nYou may qualify for the Arrearage Management Program.\n | I am glad you reached out. We have a few options that might help. There's the Arrearage Management Program, which is a twelve-month Budget Plan where a portion of your past-due balance can be forgiven each month you pay on time. We also have a payment plan to spread your balance over several months, a payment extension if you just need a little more time to pay, and other help available through agencies and programs. Which of these would you like to hear more about?"
+   },
+   {
+    "user": "Are there any rebates for a new furnace?",
+    "agents": [
+     "hardship_agent",
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->root_agent",
+     "TRANSFER->account_support_agent",
+     "find_rebates"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "It sounds like you're looking for rebates for a new furnace.\n\nWashington Gas doesn't currently have any rebate programs specifically for furnaces in the District of Columbia. However, D.C. residents can often find rebates through the [District of Columbia Sustainable Energy Utility (DCSEU)](https://www.dcseu.com).\n\nThere is also an offer for one hundred dollars on a select Rinnai tankless water heater that is open to D.C. customers.\n\nThe amounts and deadlines for any rebates are published on wgsmartsavings.com, and eligibility is determined by the specific program.\n\nIs there anything else I can help you with today regarding rebates, or would you like to explore options for your bill?"
+   }
+  ]
+ },
+ {
+  "id": "M8",
+  "group": "M Topic hops",
+  "title": "Outage, then payment help (W07)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Yes, Grace, there is an outage in your area. Based on the latest information we have, the estimated restoration time is tomorrow, October twenty-seventh, at twelve PM.\n\nIs there anything else I can help you with today?"
+   },
+   {
+    "user": "How do I pay my bill?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a credit balance of thirty-two dollars and fifteen cents on your account, and a pending payment for eighty-five dollars that should post by October twentieth, two thousand twenty-six. Your current balance is zero, and nothing is due.\n\nHow would you like to pay?"
+   }
+  ]
+ },
+ {
+  "id": "M8",
+  "group": "M Topic hops",
+  "title": "Outage, then payment help (W07)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Yes, Grace, there is an outage in your area. Based on the latest information we have, the estimated restoration time is tomorrow, October twenty-seventh, at twelve PM.\n\nIs there anything else I can help you with today?"
+   },
+   {
+    "user": "How do I pay my bill?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a credit balance of thirty-two dollars and fifteen cents on your account, and a pending payment for eighty-five dollars that should post by October twentieth, two thousand twenty-six. Your current balance is zero, and nothing is due.\n\nHow would you like to pay?"
+   }
+  ]
+ }
+]

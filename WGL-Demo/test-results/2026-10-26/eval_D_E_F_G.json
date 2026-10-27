@@ -1,0 +1,1497 @@
+[
+ {
+  "id": "D1",
+  "group": "D Service",
+  "title": "Appointments today (W09)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I can help you with that! To look up your appointments, I'll need to verify your identity first. Would you mind providing some information to help me do that?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "service_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone",
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thank you for that. I've found an account associated with that number for Hannah Brooks.\n\n | Thanks, Hannah. Let's pick up where we left off. It looks like you have a few appointments coming up, Hannah.\n\nYou have a meter test scheduled for today, October twenty-sixth, between twelve p.m. and four p.m.\n\nThere's also a service start appointment for today, October twenty-sixth, between twelve p.m. and four p.m., but it's currently delayed.\n\nAnother service stop appointment is scheduled for today, October twenty-sixth, between eight a.m. and twelve p.m., and the technician is en route for that one.\n\nAnd finally, you have a service reconnect appointment scheduled for November third, between eight"
+   }
+  ]
+ },
+ {
+  "id": "D1",
+  "group": "D Service",
+  "title": "Appointments today (W09)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Do I have any appointments coming up?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I can help you with that! To look up your appointments, I'll need to verify your identity first. Would you mind providing some information to help me do that?"
+   },
+   {
+    "user": "My mobile number is xxx-xxx-xxxx",
+    "agents": [
+     "service_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "fetch_account_by_phone",
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Thank you for that. I've found an account associated with that number for Hannah Brooks.\n\n | Thanks, Hannah. Let's pick up where we left off. It looks like you have a few appointments coming up, Hannah.\n\nYou have a meter test scheduled for today, October twenty-sixth, between twelve p.m. and four p.m.\n\nThere's also a service start appointment for today, October twenty-sixth, between twelve p.m. and four p.m., but it's currently delayed.\n\nAnother service stop appointment is scheduled for today, October twenty-sixth, between eight a.m. and twelve p.m., and the technician is en route for that one.\n\nAnd finally, you have a service reconnect appointment scheduled for November third, between eight"
+   }
+  ]
+ },
+ {
+  "id": "D2",
+  "group": "D Service",
+  "title": "Start service shows a checklist or slots (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to start gas service at 500 Main Street, Arlington, VA 22201.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_tenant_config",
+     "show_checklist_card"
+    ],
+    "cards": [
+     "show_checklist_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "<emoji_icon>\ud83d\uddd3\ufe0f</emoji_icon> To start your gas service, we need at least two business days' notice, which is 48 hours; weekends and holidays do not count. <emoji_icon>\ud83d\udcb0</emoji_icon> There is a gas on fee of fourteen dollars and eighty-five cents. <emoji_icon>\ud83c\udfe1</emoji_icon> Someone eighteen or older must be home to give us access. What date would you like us to start your service?"
+   }
+  ]
+ },
+ {
+  "id": "D2",
+  "group": "D Service",
+  "title": "Start service shows a checklist or slots (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to start gas service at 500 Main Street, Arlington, VA 22201.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_tenant_config",
+     "show_checklist_card"
+    ],
+    "cards": [
+     "show_checklist_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that. When you start gas service, we need at least two business days' notice. That's forty-eight hours, and weekends and holidays don't count. There's a gas on fee of fourteen dollars and eighty-five cents. Also, someone eighteen or older needs to be home to give us access. What date would you like to start your gas service?"
+   }
+  ]
+ },
+ {
+  "id": "D3",
+  "group": "D Service",
+  "title": "Reschedule asks for verification, nothing changed (W09)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need to reschedule my appointment.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see you have a few appointments scheduled. Which one would you like to reschedule? I see one for a meter test today between 12:00 PM and 4:00 PM, another for a service start also today between 12:00 PM and 4:00 PM which is delayed, one for a service stop today between 8:00 AM and 12:00 PM which is en route, and a reconnection appointment for November 3rd between 8:00 AM and 12:00 PM."
+   }
+  ]
+ },
+ {
+  "id": "D3",
+  "group": "D Service",
+  "title": "Reschedule asks for verification, nothing changed (W09)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I need to reschedule my appointment.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_active_appointments"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see you have a few appointments scheduled. Which one would you like to reschedule? I see one for a meter test today between 12:00 PM and 4:00 PM, another for a service start also today between 12:00 PM and 4:00 PM which is delayed, one for a service stop today between 8:00 AM and 12:00 PM which is en route, and a reconnection appointment for November 3rd between 8:00 AM and 12:00 PM."
+   }
+  ]
+ },
+ {
+  "id": "D4",
+  "group": "D Service",
+  "title": "Meter reading question (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How do I submit my own meter reading?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, I cannot find information on how to submit a meter reading. Would you like me to connect you with a representative who can help you with that?"
+   }
+  ]
+ },
+ {
+  "id": "D4",
+  "group": "D Service",
+  "title": "Meter reading question (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How do I submit my own meter reading?",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry, I cannot find information on how to submit a meter reading. Would you like me to connect you with a representative who can help you with that?"
+   }
+  ]
+ },
+ {
+  "id": "D5",
+  "group": "D Service",
+  "title": "Moving: stop and start at a new address (W14)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I'm moving next month and need to stop service.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_tenant_config",
+     "show_checklist_card"
+    ],
+    "cards": [
+     "show_checklist_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that. When stopping your gas service, we ask for at least two business days notice, which is forty-eight hours; weekends and holidays do not count. There is a gas off fee of sixty dollars. We also require someone eighteen or older to be at home to give our technician access to the meter. What is the full service address where you want to stop service?"
+   }
+  ]
+ },
+ {
+  "id": "D5",
+  "group": "D Service",
+  "title": "Moving: stop and start at a new address (W14)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I'm moving next month and need to stop service.",
+    "agents": [
+     "root_agent",
+     "service_agent"
+    ],
+    "tools": [
+     "TRANSFER->service_agent",
+     "get_tenant_config",
+     "show_checklist_card"
+    ],
+    "cards": [
+     "show_checklist_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that. When stopping your gas service, we ask for at least two business days notice, which is forty-eight hours; weekends and holidays do not count. There is a gas off fee of sixty dollars. We also require someone eighteen or older to be at home to give our technician access to the meter. What is the full service address where you want to stop service?"
+   }
+  ]
+ },
+ {
+  "id": "E1",
+  "group": "E Info",
+  "title": "Outage in an active-outage ZIP (W07, 20009)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Yes, Grace, there is an outage in your area. Based on the latest information we have, the estimated restoration time is tomorrow, October twenty-seventh, at twelve PM.\n\nIs there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "E1",
+  "group": "E Info",
+  "title": "Outage in an active-outage ZIP (W07, 20009)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Yes, Grace, there is an outage in your area. Based on the latest information we have, the estimated restoration time is tomorrow, October twenty-seventh, at twelve PM.\n\nIs there anything else I can help you with today?"
+   }
+  ]
+ },
+ {
+  "id": "E2",
+  "group": "E Info",
+  "title": "Outage question with no outage (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Based on the latest information we have, there are no outages or planned maintenance reported in your area today.\n\nIs there anything else I can help you with?"
+   }
+  ]
+ },
+ {
+  "id": "E2",
+  "group": "E Info",
+  "title": "Outage question with no outage (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Is there an outage in my area?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "check_outage_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Based on the latest information we have, there are no outages or planned maintenance reported in your area today.\n\nIs there anything else I can help you with?"
+   }
+  ]
+ },
+ {
+  "id": "E3",
+  "group": "E Info",
+  "title": "Rebates for a new water heater (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What rebates are available for a new water heater?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "find_rebates",
+     "show_rebate_card"
+    ],
+    "cards": [
+     "show_rebate_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Here are the rebates that match your home. Your furnace is about twelve years old, so you may qualify for a rebate of up to two thousand dollars on a new ENERGY STAR furnace or boiler. You may also qualify for a rebate of up to four hundred dollars on a new ENERGY STAR water heater, to replace your storage water heater. There's also a one hundred dollar rebate for a smart thermostat, since you don't have one on file, and another one hundred dollar rebate for a home heating tune-up, which fits your furnace. Finally, you may qualify for a one hundred dollar rebate on a select Rinnai tankless water heater to replace your storage water heater. This offer expires on December thirty-first, two tho"
+   }
+  ]
+ },
+ {
+  "id": "E3",
+  "group": "E Info",
+  "title": "Rebates for a new water heater (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What rebates are available for a new water heater?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "find_rebates",
+     "show_rebate_card"
+    ],
+    "cards": [
+     "show_rebate_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Here are the rebates that match your home. Your furnace is about twelve years old, so you may qualify for a rebate of up to two thousand dollars on a new ENERGY STAR furnace or boiler. You may also qualify for a rebate of up to four hundred dollars on a new ENERGY STAR water heater, to replace your storage water heater. There's also a one hundred dollar rebate for a smart thermostat, since you don't have one on file, and another one hundred dollar rebate for a home heating tune-up, which fits your furnace. Finally, you may qualify for a one hundred dollar rebate on a select Rinnai tankless water heater to replace your storage water heater. This offer expires on December thirty-first, two tho"
+   }
+  ]
+ },
+ {
+  "id": "E4",
+  "group": "E Info",
+  "title": "D.C. customer asks about rebates (W04): D.C. has no Washington Gas program",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What rebates can I get for a new furnace?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "find_rebates",
+     "show_rebate_card"
+    ],
+    "cards": [
+     "show_rebate_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Washington Gas lists no current rebate program for the District of Columbia. For customers in the District, rebates are available through the D.C. Sustainable Energy Utility. There is also an offer of one hundred dollars on a select Rinnai tankless water heater that may fit, to replace your storage water heater. Amounts and deadlines are published on wgsmartsavings.com, and eligibility is decided by the program."
+   }
+  ]
+ },
+ {
+  "id": "E4",
+  "group": "E Info",
+  "title": "D.C. customer asks about rebates (W04): D.C. has no Washington Gas program",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What rebates can I get for a new furnace?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "find_rebates",
+     "show_rebate_card"
+    ],
+    "cards": [
+     "show_rebate_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Washington Gas lists no current rebate program for the District of Columbia. For customers in the District, rebates are available through the D.C. Sustainable Energy Utility. There is also an offer of one hundred dollars on a select Rinnai tankless water heater that may fit, to replace your storage water heater. Amounts and deadlines are published on wgsmartsavings.com, and eligibility is decided by the program."
+   }
+  ]
+ },
+ {
+  "id": "E5",
+  "group": "E Info",
+  "title": "Gas rates question",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What are your gas rates?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "We have a few components that make up your gas rate.\n\n*   \ud83d\udd25 The customer charge is a fixed monthly amount that helps cover the costs of providing service.\n*   \ud83d\udcca The distribution charge is based on how much gas you use, measured in therms. This can sometimes include surcharges depending on your location.\n*   \ud83d\udcb0 The gas charge, which you'll see as PGC on your bill, covers the cost of the gas supply and transportation. Washington Gas doesn't profit from the gas sale and charges regulated customers the same price it pays for the gas. This price changes monthly.\n*   \ud83e\uddfe Taxes are also collected for your local jurisdiction.\n\nThe website doesn't list specific dollar amounts for these charges."
+   }
+  ]
+ },
+ {
+  "id": "E5",
+  "group": "E Info",
+  "title": "Gas rates question",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What are your gas rates?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "We have a few components that make up your gas rate.\n\n*   \ud83d\udd25 The customer charge is a fixed monthly amount that helps cover the costs of providing service.\n*   \ud83d\udcca The distribution charge is based on how much gas you use, measured in therms. This can sometimes include surcharges depending on your location.\n*   \ud83d\udcb0 The gas charge, which you'll see as PGC on your bill, covers the cost of the gas supply and transportation. Washington Gas doesn't profit from the gas sale and charges regulated customers the same price it pays for the gas. This price changes monthly.\n*   \ud83e\uddfe Taxes are also collected for your local jurisdiction.\n\nThe website doesn't list specific dollar amounts for these charges."
+   }
+  ]
+ },
+ {
+  "id": "E6",
+  "group": "E Info",
+  "title": "Where can I pay in person",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Where can I pay my bill in person near 22201?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "find_payment_locations"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a few options to pay your bill in person near the 22201 ZIP code.\n\n*   You can pay at participating **Royal Farms**, **Speedway**, or **Walmart** stores. They accept cash and are open during their regular store hours.\n*   You can also pay at the **Washington Gas Walk-in Office** in Winchester, located at 350 Hillandale Lane. Their hours are Monday through Friday, 8 AM to 4 PM, and they are closed on holidays.\n*   **7-Eleven** stores also accept payments at participating locations during their store hours.\n\nWould you like me to help you find a specific location closer to you, or is there anything else I can assist with?"
+   }
+  ]
+ },
+ {
+  "id": "E6",
+  "group": "E Info",
+  "title": "Where can I pay in person",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "Where can I pay my bill in person near 22201?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "find_payment_locations"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "You have a few options to pay your bill in person near the 22201 ZIP code.\n\n*   You can pay at participating **Royal Farms**, **Speedway**, or **Walmart** stores. They accept cash and are open during their regular store hours.\n*   You can also pay at the **Washington Gas Walk-in Office** in Winchester, located at 350 Hillandale Lane. Their hours are Monday through Friday, 8 AM to 4 PM, and they are closed on holidays.\n*   **7-Eleven** stores also accept payments at participating locations during their store hours.\n\nWould you like me to help you find a specific location closer to you, or is there anything else I can assist with?"
+   }
+  ]
+ },
+ {
+  "id": "E7",
+  "group": "E Info",
+  "title": "Office hours question",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What are your office hours?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "get_tenant_config"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Washington Gas's front office is open Monday through Friday, from 8 AM to 6 PM Eastern Time. Our collections department is open Monday through Friday, from 8 AM to 6 PM Eastern Time. For emergencies, we are available 24 hours a day, 7 days a week."
+   }
+  ]
+ },
+ {
+  "id": "E7",
+  "group": "E Info",
+  "title": "Office hours question",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What are your office hours?",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "get_tenant_config"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Washington Gas's front office is open Monday through Friday, from 8 AM to 6 PM Eastern Time. Our collections department is open Monday through Friday, from 8 AM to 6 PM Eastern Time. For emergencies, we are available 24 hours a day, 7 days a week."
+   }
+  ]
+ },
+ {
+  "id": "E8",
+  "group": "E Info",
+  "title": "Rebate claim status (W01 has seeded claims)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is the status of my rebate claim?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "get_rebate_claim_status",
+     "show_claim_status_card"
+    ],
+    "cards": [
+     "show_claim_status_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your smart thermostat claim, RB-3001, is currently reviewing. It was sent in on October eighth. The program asks you to allow six to eight weeks after a complete application."
+   }
+  ]
+ },
+ {
+  "id": "E8",
+  "group": "E Info",
+  "title": "Rebate claim status (W01 has seeded claims)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is the status of my rebate claim?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "get_rebate_claim_status",
+     "show_claim_status_card"
+    ],
+    "cards": [
+     "show_claim_status_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your smart thermostat claim, RB-3001, is currently reviewing. It was sent in on October eighth. The program asks you to allow six to eight weeks after a complete application."
+   }
+  ]
+ },
+ {
+  "id": "E9",
+  "group": "E Info",
+  "title": "Safety question that is not an emergency",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How do I safely relight my pilot light?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that.\n\nThe Washington Gas website doesn't provide specific steps for relighting a pilot light. Instead, they recommend calling **844-WASHGAS (xxx-xxx-xxxx)** to restore gas service.\n\nIf you ever smell gas, please leave the area immediately, and from a safe location, call **911** and the Washington Gas Emergency Leak Line at **844-WASHGAS (xxx-xxx-xxxx), option 1**.\n"
+   }
+  ]
+ },
+ {
+  "id": "E9",
+  "group": "E Info",
+  "title": "Safety question that is not an emergency",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "How do I safely relight my pilot light?",
+    "agents": [
+     "root_agent",
+     "account_support_agent"
+    ],
+    "tools": [
+     "TRANSFER->account_support_agent",
+     "knowledge_base_search"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I can help you with that.\n\nThe Washington Gas website doesn't provide specific steps for relighting a pilot light. Instead, they recommend calling **844-WASHGAS (xxx-xxx-xxxx)** to restore gas service.\n\nIf you ever smell gas, please leave the area immediately, and from a safe location, call **911** and the Washington Gas Emergency Leak Line at **844-WASHGAS (xxx-xxx-xxxx), option 1**.\n"
+   }
+  ]
+ },
+ {
+  "id": "F1",
+  "group": "F Safety",
+  "title": "Gas smell (guest, home page)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I smell gas in my kitchen",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F1",
+  "group": "F Safety",
+  "title": "Gas smell (guest, home page)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I smell gas in my kitchen",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F2",
+  "group": "F Safety",
+  "title": "Carbon monoxide alarm",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My carbon monoxide alarm is going off",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F2",
+  "group": "F Safety",
+  "title": "Carbon monoxide alarm",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My carbon monoxide alarm is going off",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F3",
+  "group": "F Safety",
+  "title": "Gas smell in Spanish",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "huelo a gas en mi casa",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Si huele a gas, salga del edificio de inmediato. No use interruptores, electrodom\u00e9sticos ni tel\u00e9fonos adentro. Desde un lugar seguro afuera, llame al 911 y luego a la l\u00ednea de emergencias de Washington Gas al xxx-xxx-xxxx, opci\u00f3n 1."
+   }
+  ]
+ },
+ {
+  "id": "F3",
+  "group": "F Safety",
+  "title": "Gas smell in Spanish",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "huelo a gas en mi casa",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Si huele a gas, salga del edificio de inmediato. No use interruptores, electrodom\u00e9sticos ni tel\u00e9fonos adentro. Desde un lugar seguro afuera, llame al 911 y luego a la l\u00ednea de emergencias de Washington Gas al xxx-xxx-xxxx, opci\u00f3n 1."
+   }
+  ]
+ },
+ {
+  "id": "F4",
+  "group": "F Safety",
+  "title": "Negated: I don't smell gas, just my bill",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I don't smell gas, I just want to check my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your current balance is eighty-six dollars and eighty-nine cents, and that's due on November fourteenth, two thousand twenty-six.\n\nIs there anything else I can help you with today regarding your bill?"
+   }
+  ]
+ },
+ {
+  "id": "F4",
+  "group": "F Safety",
+  "title": "Negated: I don't smell gas, just my bill",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I don't smell gas, I just want to check my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Okay, I see your current balance is eighty-six dollars and eighty-nine cents, and that's due on November fourteenth, two thousand twenty-six.\n\nIs there anything else I can help you with today regarding your bill?"
+   }
+  ]
+ },
+ {
+  "id": "F5",
+  "group": "F Safety",
+  "title": "Emergency in the middle of a conversation (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Actually, I think I smell gas right now",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F5",
+  "group": "F Safety",
+  "title": "Emergency in the middle of a conversation (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "What is my balance?",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status",
+     "show_bill_summary_card"
+    ],
+    "cards": [
+     "show_bill_summary_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "Your current balance is eighty-six dollars and eighty-nine cents, due on November fourteenth, two thousand twenty-six."
+   },
+   {
+    "user": "Actually, I think I smell gas right now",
+    "agents": [
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F6",
+  "group": "F Safety",
+  "title": "Emergency while verifying",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "wait, there is a gas leak in my basement",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "F6",
+  "group": "F Safety",
+  "title": "Emergency while verifying",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to pay my bill.",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "To confirm, you would like to pay your bill of eighty-six dollars and eighty-nine cents, which is due on November fourteenth, two thousand twenty-six. Is that right?"
+   },
+   {
+    "user": "Pay with my card",
+    "agents": [
+     "billing_payments_agent",
+     "auth_agent"
+    ],
+    "tools": [
+     "TRANSFER->auth_agent",
+     "get_auth_options"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "Quick security check. How would you like to verify?"
+   },
+   {
+    "user": "wait, there is a gas leak in my basement",
+    "agents": [
+     "auth_agent"
+    ],
+    "tools": [
+     "show_emergency_card"
+    ],
+    "cards": [
+     "show_emergency_card"
+    ],
+    "ended": false,
+    "error": "",
+    "text": "If you smell gas, please leave the building immediately. Do not use switches, appliances or phones inside. From a safe place outside, call 911, and then the Washington Gas emergency line at xxx-xxx-xxxx, option 1."
+   }
+  ]
+ },
+ {
+  "id": "G1",
+  "group": "G People",
+  "title": "Representative request (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to talk to a representative.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G1",
+  "group": "G People",
+  "title": "Representative request (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to talk to a representative.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G2",
+  "group": "G People",
+  "title": "Oxygen: medical specialist route (W01)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My husband is on oxygen and we can't pay.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm so sorry to hear that you're in such a difficult situation. I understand this must be very stressful for you and your husband. I want to assure you that we're here to help.\n | I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G2",
+  "group": "G People",
+  "title": "Oxygen: medical specialist route (W01)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My husband is on oxygen and we can't pay.",
+    "agents": [
+     "root_agent",
+     "hardship_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->hardship_agent",
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm so sorry to hear that you're in such a difficult situation. I understand this must be very stressful for you and your husband. I want to assure you that we're here to help.\n | I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G3",
+  "group": "G People",
+  "title": "Bereavement route",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My husband passed away last month and I need to take his name off the account.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G3",
+  "group": "G People",
+  "title": "Bereavement route",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "My husband passed away last month and I need to take his name off the account.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G4",
+  "group": "G People",
+  "title": "Complaint from a guest: no case is created before identification",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to file a complaint about a technician who damaged my lawn.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that happened. I can connect you with an agent who can help you file a complaint about the technician.\n"
+   }
+  ]
+ },
+ {
+  "id": "G4",
+  "group": "G People",
+  "title": "Complaint from a guest: no case is created before identification",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to file a complaint about a technician who damaged my lawn.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I'm sorry to hear that happened. I can connect you with an agent who can help you file a complaint about the technician.\n"
+   }
+  ]
+ },
+ {
+  "id": "G5",
+  "group": "G People",
+  "title": "Asks for a manager",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to speak to a manager.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I understand you'd like to speak with a manager. I can connect you with a live representative who can help with that.\n | I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G5",
+  "group": "G People",
+  "title": "Asks for a manager",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "I want to speak to a manager.",
+    "agents": [
+     "root_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "end_session"
+    ],
+    "cards": [],
+    "ended": true,
+    "error": "",
+    "text": "I understand you'd like to speak with a manager. I can connect you with a live representative who can help with that.\n | I'm connecting you to a representative now \u2014 they'll have everything we've discussed so you won't need to repeat yourself. Please hold."
+   }
+  ]
+ },
+ {
+  "id": "G6",
+  "group": "G People",
+  "title": "Upset caller (distress rising)",
+  "run": 1,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "This is ridiculous, I keep getting charged and nobody helps me! I'm furious!",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->billing_payments_agent",
+     "get_payment_status"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I completely understand how frustrating it is to feel like you're not getting the help you need, and to keep seeing charges that you don't understand. I'm so sorry you're going through this. I'm here to help you with your bill concerns.\n | It sounds like you're having a really tough time with this, and I want to assure you that I'm here to help you get to the bottom of these charges.\n | It sounds like you're having a really tough time with this, and I want to assure you that I'm here to help you get to the bottom of these charges.\n\nYour current balance is **$86.89**, due on **November 14, 2026**. How would you like to pay?\n"
+   }
+  ]
+ },
+ {
+  "id": "G6",
+  "group": "G People",
+  "title": "Upset caller (distress rising)",
+  "run": 2,
+  "verdict": "PASS",
+  "failed": [],
+  "soft_misses": [],
+  "turns": [
+   {
+    "user": "This is ridiculous, I keep getting charged and nobody helps me! I'm furious!",
+    "agents": [
+     "root_agent",
+     "billing_payments_agent"
+    ],
+    "tools": [
+     "set_session_state",
+     "TRANSFER->billing_payments_agent"
+    ],
+    "cards": [],
+    "ended": false,
+    "error": "",
+    "text": "I completely understand how frustrating it is to feel like you're not getting the help you need, and to keep seeing charges that you don't understand. I'm so sorry you're going through this. I'm here to help you with your bill concerns.\n | It sounds like you're having a really tough time with this, and I want to assure you that I'm here to help you get to the bottom of these charges.\n | I completely understand how frustrating it is to feel like you're not getting the help you need, and to keep seeing charges that you don't understand. I'm so sorry you're going through this. I'm here to help you with your bill concerns. What can I do to help you with your bill today?"
+   }
+  ]
+ }
+]
